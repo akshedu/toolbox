@@ -1,7 +1,6 @@
 
 import os
 from celery import Celery
-from django.apps import apps, AppConfig
 from django.conf import settings
 
 
@@ -16,18 +15,7 @@ app = Celery('toolbox')
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
 app.config_from_object('django.conf:settings', namespace='CELERY')
-
-
-class CeleryAppConfig(AppConfig):
-    name = 'toolbox'
-    verbose_name = 'Celery Config'
-
-    def ready(self):
-        installed_apps = [app_config.name for app_config in apps.get_app_configs()]
-        app.autodiscover_tasks(lambda: installed_apps, force=True)
-
-        
-
+app.autodiscover_tasks()
 
 @app.task(bind=True)
 def debug_task(self):
