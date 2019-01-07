@@ -19,7 +19,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 
 class CeleryAppConfig(AppConfig):
-    name = 'toolbox.taskapp'
+    name = 'toolbox'
     verbose_name = 'Celery Config'
 
     def ready(self):
