@@ -30,11 +30,11 @@ def get_channel_videos(youtube, channel_id):
             part="snippet",
             maxResults=50
             )
-    while playlistItem_query:
-        playlistItem_query_response = playlistItem_query.execute()
-        for item in playlistItem_query_response.get("items",[]):
-            temp_channel_id.append(item['snippet']['channelId'])
-            temp_video_id.append(item['snippet']['resourceId']['videoId'])
-        playlistItem_query = youtube.playlistItems().list_next(playlistItem_query,playlistItem_query_response)
+        while playlistItem_query:
+            playlistItem_query_response = playlistItem_query.execute()
+            for item in playlistItem_query_response.get("items",[]):
+                temp_channel_id.append(item['snippet']['channelId'])
+                temp_video_id.append(item['snippet']['resourceId']['videoId'])
+            playlistItem_query = youtube.playlistItems().list_next(playlistItem_query,playlistItem_query_response)
     except:
-        print 'Data not found for channel id {}'.format(channel_id)
+        print('Data not found for channel id {}'.format(channel_id))
