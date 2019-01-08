@@ -9,7 +9,7 @@ SERVICE_ACCOUNT_FILE = '/Users/akshanshgupta/Downloads/project-id-84621224501795
 
 # Create your models here.
 class TrackedChannel(models.Model):
-    channel_id = models.CharField(max_length=24, db_index=True)
+    channel_id = models.CharField(max_length=24, db_index=True, primary_key=True)
     added = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
 
