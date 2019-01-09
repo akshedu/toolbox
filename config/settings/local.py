@@ -65,3 +65,8 @@ CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Google Service Account files for making API calls
+SERVICE_ACCOUNT_FILES = ['/Users/akshanshgupta/Downloads/project-id-8462122450179553311-3dedd987ff35.json']
+
+# Get the final number of splits using a min of defined value with total service account files
+TRACKED_CHANNEL_SPLITS = min(TRACKED_CHANNEL_SPLITS, len(SERVICE_ACCOUNT_FILES))

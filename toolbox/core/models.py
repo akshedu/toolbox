@@ -12,7 +12,7 @@ class Channel(models.Model):
 
 class ChannelVideoMap(models.Model):
 	channel = models.ForeignKey(Channel, to_field='channel_id', on_delete=models.CASCADE)
-	video_id = models.CharField(max_length=11, db_index=True, unique=True)
+	video_id = models.CharField(max_length=11, db_index=True, primary_key=True)
 
 	class Meta:
 		unique_together = ('channel', 'video_id',)

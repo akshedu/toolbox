@@ -9,7 +9,7 @@ APPS_DIR = ROOT_DIR.path('toolbox')
 
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool('DJANGO_READ_DOT_ENV_FILE', default=False)
+READ_DOT_ENV_FILE = env.bool('DJANGO_READ_DOT_ENV_FILE', default=True)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(ROOT_DIR.path('.env')))
@@ -272,3 +272,8 @@ SOCIALACCOUNT_ADAPTER = 'toolbox.users.adapters.SocialAccountAdapter'
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# YouTube service scopes
+YOUTUBE_SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
+
+# Number of Groups for Scraping Channels (To ensure reasonable API hits for each service account)
+TRACKED_CHANNEL_SPLITS = 2

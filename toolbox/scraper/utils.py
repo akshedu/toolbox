@@ -2,8 +2,6 @@
 from google.oauth2 import service_account
 import googleapiclient.discovery
 
-SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
-SERVICE_ACCOUNT_FILE = '/Users/akshanshgupta/Downloads/project-id-8462122450179553311-3dedd987ff35.json'
 
 def create_youtube_service(SCOPES, SERVICE_ACCOUNT_FILE):
     credentials = service_account.Credentials.from_service_account_file(
@@ -38,3 +36,36 @@ def get_channel_videos(youtube, channel_id):
             playlistItem_query = youtube.playlistItems().list_next(playlistItem_query,playlistItem_query_response)
     except:
         print('Data not found for channel id {}'.format(channel_id))
+
+
+def get_channel_details(youtube, channel_ids):
+  channel_query_response = youtube.channels().list(
+    part='snippet,statistics',
+    id=channel_ids
+    ).execute()
+
+  for item in channel_query_response.get("items", []):
+    try:
+        channelID.append(item['id'])
+    except:
+        channelID.append('')
+    try:
+      channel_title.append(item['snippet']['title'])
+    except:
+      channel_title.append('')
+    try:
+        views.append(item['statistics']['viewCount'])
+    except:
+        views.append('')
+    try:
+        comments.append(item['statistics']['commentCount'])
+    except KeyError:
+        comments.append('')
+    try:
+      subs.append(item['statistics']['subscriberCount'])
+    except:
+      subs.append('')
+    try:
+      videos.append(item['statistics']['videoCount'])
+    except:
+      videos.append('')

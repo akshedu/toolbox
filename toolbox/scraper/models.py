@@ -2,10 +2,11 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from .utils import create_youtube_service
 
-SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
-SERVICE_ACCOUNT_FILE = '/Users/akshanshgupta/Downloads/project-id-8462122450179553311-3dedd987ff35.json'
+SCOPES = settings.YOUTUBE_SCOPES
+SERVICE_ACCOUNT_FILE = settings.SERVICE_ACCOUNT_FILES[0]
 
 # Create your models here.
 class TrackedChannel(models.Model):
