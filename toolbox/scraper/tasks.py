@@ -29,7 +29,6 @@ def srape_youtube_channels():
 @shared_task
 def scrape_youtube_videos():
     video_list = list(ChannelVideoMap.objects.values_list('video_id', flat=True))
-    print(video_list)
     video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
@@ -46,7 +45,6 @@ def scrape_youtube_video_chunks(video_list, service_account_file):
 
     if not video_details_missing == []:
         for video_chunks in chunks(video_details_missing, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
-            print(video_chunks)
             video_details_task(youtube_service, video_chunks, VIDEO_DETAILS_PART)
 
     for video_chunks in chunks(video_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
