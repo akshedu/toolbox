@@ -274,6 +274,7 @@ SOCIALACCOUNT_ADAPTER = 'toolbox.users.adapters.SocialAccountAdapter'
 # ------------------------------------------------------------------------------
 # YouTube service scopes
 YOUTUBE_SCOPES = ['https://www.googleapis.com/auth/youtube.readonly']
+YOUTUBE_RESOURCE_LIST_LIMIT = 50
 
 # Number of Groups for Scraping Channels (To ensure reasonable API hits for each service account)
 TRACKED_CHANNEL_SPLITS = 2
