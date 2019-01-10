@@ -14,12 +14,7 @@ CHANNEL_DETAILS_PART = 'snippet'
 RESOURCE_STATISTICS_PART = 'statistics'
 
 @shared_task
-def scrape_youtube():
-    srape_youtube_channels.apply_async(link=scrape_youtube_videos.si())
-
-
-@shared_task
-def srape_youtube_channels():
+def scrape_youtube_channels():
     channel_list = list(TrackedChannel.objects.values_list('channel_id', flat=True))
     channel_chunks = list(chunkify(channel_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):

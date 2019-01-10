@@ -6,7 +6,7 @@ import googleapiclient.discovery
 def create_youtube_service(SCOPES, SERVICE_ACCOUNT_FILE):
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    return googleapiclient.discovery.build('youtube', 'v3', credentials=credentials)
+    return googleapiclient.discovery.build('youtube', 'v3', credentials=credentials, cache_discovery=False)
 
 
 def chunks(l, n):
