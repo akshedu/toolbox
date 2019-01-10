@@ -64,8 +64,7 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
 
     for channel_chunks in chunks(channel_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
         channel_stats_task(youtube_service, channel_chunks, RESOURCE_STATISTICS_PART)
-
-    return None
+        
 
 #@shared_task
 def channel_videos_map_task(youtube_service, channel_id):
