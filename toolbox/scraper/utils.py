@@ -48,6 +48,7 @@ def get_channel_videos(youtube, channel_id):
 
 
 def get_channel_list(youtube, channel_ids, part):
+    channel_ids = ','.join(str(v) for v in channel_ids)
     return youtube.channels().list(
         part=part,
         id=channel_ids
@@ -55,6 +56,7 @@ def get_channel_list(youtube, channel_ids, part):
 
 
 def get_video_list(youtube, video_ids, part):
+    video_ids = ','.join(str(v) for v in video_ids)
     return youtube.videos().list(
         part=part,
         id=video_ids
