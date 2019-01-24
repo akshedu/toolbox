@@ -1,0 +1,32 @@
+{
+  "name": "toolbox",
+  "version": "1.0.0",
+  "description": "toolbox =======",
+  "main": "Gruntfile.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "grunt": "^1.0.3",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-contrib-uglify": "^4.0.0",
+    "grunt-sass": "^3.0.2",
+    "grunt-contrib-less": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "grunt watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akshedu/toolbox.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akshedu/toolbox/issues"
+  },
+  "homepage": "https://github.com/akshedu/toolbox#readme"
+}

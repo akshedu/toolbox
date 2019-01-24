@@ -55,9 +55,9 @@ module.exports = function(grunt) {
       },
 
       watch: {
-        options: {livereload: true}
+        options: {livereload: true},
         javascript: {
-          files: ['toolbox/static/js/app/**/*.js'],
+          files: ['toolbox/static/js/app/*.js'],
           tasks: ['concat']
         },
         sass: {
