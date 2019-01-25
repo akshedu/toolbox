@@ -1,4 +1,4 @@
-var toolboxApp;
+var toolboxApp, home;
 toolboxApp = angular.module(
   'toolboxApp', [
     'ngResource',
@@ -7,5 +7,12 @@ toolboxApp = angular.module(
     'ui.bootstrap',
     'ngCookies',
     'base64',
+    'home'
+  ]
+)
+
+home = angular.module(
+  'home', [
+    'homeControllers'
   ]
 )
