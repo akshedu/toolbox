@@ -8,13 +8,14 @@ from django.views import defaults as default_views
 
 from rest_framework.routers import DefaultRouter
 
-from toolbox.core.views import VideoViewSet, TopVideoViewSet, TopChannelViewSet, OverviewSet
+from toolbox.core.views import VideoViewSet, TopVideoViewSet, TopChannelViewSet, OverviewSet, TopKeywordsViewSet
 
 router = DefaultRouter()
 router.register(r'videos', VideoViewSet)
 router.register(r'top/videos', TopVideoViewSet, base_name='top_videos')
 router.register(r'top/channels', TopChannelViewSet, base_name='top_channels')
 router.register(r'overview', OverviewSet, base_name='overview')
+router.register(r'top/keywords', TopKeywordsViewSet, base_name='top_keywords')
 
 urlpatterns = [
     path('api/', include(router.urls)),

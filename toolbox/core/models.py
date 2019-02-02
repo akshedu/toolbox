@@ -1,6 +1,7 @@
 
 import datetime
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Thumbnail(models.Model):
@@ -40,7 +41,7 @@ class ChannelVideoMap(models.Model):
 class Video(Resource):
 	video = models.OneToOneField(ChannelVideoMap, to_field='video_id', on_delete=models.CASCADE, primary_key=True)
 	duration = models.IntegerField(null=True)
-	keywords = models.TextField(null=True)
+	keywords = ArrayField(models.CharField(max_length=255,null=True),null=True)
 
 
 class ChannelStats(models.Model):

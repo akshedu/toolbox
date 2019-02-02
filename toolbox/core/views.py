@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from toolbox.core import BadRequest
 
-from django.db.models import Sum
+from django.db.models import Sum, F, Func
 
 import pandas as pd
 
@@ -63,23 +63,31 @@ def validate_inputs(resource, request):
     return timerange, metric, end_date
 
 
-class TopVideoViewSet(ViewSet):
-    def list(self, request):
+def get_top_videos_df(request):
         timerange, metric, end_date = validate_inputs('Video', request)
         top_videos_queryset = TopVideos.objects.filter(frequency=timerange, date=end_date, metric=metric)
         if not top_videos_queryset.exists():
-            return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
-                             'status':'failed'})
+            return None
         top_video_ids = list(top_videos_queryset.values_list('video_id', flat=True))
         top_videos_incremental = top_videos_queryset.values('video_id','video__title','incremental','metric')
         top_video_stats = VideoStats.objects.filter(video_id__in=top_video_ids, crawled_date=end_date).values('video_id','views','likes','dislikes','comments')
         top_videos_incremental_df = pd.DataFrame(list(top_videos_incremental))
         top_videos_stats_df = pd.DataFrame(list(top_video_stats))
         top_videos = pd.merge(top_videos_incremental_df, top_videos_stats_df, on='video_id')
+        top_videos = top_videos.replace({pd.np.nan:None})
+        return top_videos
+
+
+class TopVideoViewSet(ViewSet):
+    def list(self, request):
+        top_videos = get_top_videos_df(request)
+        if top_videos is None:
+            return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
+                             'status':'failed'})
+        print(top_videos)
         result = {}
         result['status'] = 'success'
         result['data'] = top_videos.to_dict(orient='records')
-
         return Response(result)
 
 
@@ -112,3 +120,21 @@ class OverviewSet(ViewSet):
         data['total_subscribers'] = ChannelStats.objects.filter(crawled_date=timezone.now()).aggregate(Sum('subscribers'))['subscribers__sum']
         return Response(data)
 
+
+class TopKeywordsViewSet(ViewSet):
+    def list(self, request):
+        top_videos = get_top_videos_df(request)
+        if top_videos is None:
+            return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
+                             'status':'failed'})
+        top_video_ids = top_videos.video_id.tolist()
+        video_keywords_df = pd.DataFrame(list(Video.objects.filter(video_id__in=top_video_ids).annotate(keyword=Func(F('keywords'), function='unnest')).values('video_id', 'keyword')))
+        top_keywords_incremental_df = pd.merge(top_videos, video_keywords_df, on='video_id')
+        top_keywords_incremental_df = top_keywords_incremental_df.groupby('keyword')['incremental']\
+                                        .sum().reset_index().sort_values('incremental',ascending=False).head(50)
+        top_keywords_video_ids = video_keywords_df[video_keywords_df.keyword.isin(top_keywords_incremental_df.keyword)].video_id.unique()
+
+        result = {}
+        result['top_keywords'] = top_keywords_incremental_df.to_dict(orient='records')
+        result['top_videos'] = top_videos[top_videos.video_id.isin(top_keywords_video_ids)].to_dict(orient='records')
+        return Response(result)
