@@ -66,3 +66,22 @@ class VideoStats(models.Model):
 
 	class Meta:
 		unique_together = ('video', 'crawled_date',)
+
+
+class TopResource(models.Model):
+	metric = models.CharField(max_length=25)
+	date = models.DateTimeField(auto_now_add=True)
+	frequency = models.CharField(max_length=25)
+	incremental = models.BigIntegerField(null=True)
+
+	class Meta:
+		abstract = True
+
+
+class TopVideos(TopResource):
+	video = models.ForeignKey(Video, on_delete=models.CASCADE)
+
+
+class TopChannels(TopResource):
+	channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
+

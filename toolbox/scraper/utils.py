@@ -2,6 +2,8 @@
 from google.oauth2 import service_account
 import googleapiclient.discovery
 
+from toolbox.core.models import ChannelStats, VideoStats
+
 
 def create_youtube_service(SCOPES, SERVICE_ACCOUNT_FILE):
     credentials = service_account.Credentials.from_service_account_file(
@@ -61,3 +63,18 @@ def get_video_list(youtube, video_ids, part):
         part=part,
         id=video_ids
         ).execute()
+
+
+def get_video_incremental_queryset(start_date, end_date):
+    return VideoStats.objects.filter(crawled_date__in=[start_date, end_date]).extra(select={
+                    'inc_views': 'views - lag(views) over (partition by video_id order by crawled_date)',
+                    'inc_likes': 'likes - lag(likes) over (partition by video_id order by crawled_date)',
+                    'inc_comments': 'comments - lag(comments) over (partition by video_id order by crawled_date)'
+                }).values('video_id','inc_views','inc_likes','inc_comments')
+
+
+def get_channel_incremental_queryset(start_date, end_date)
+    return ChannelStats.objects.filter(crawled_date__in=[start_date, end_date]).extra(select={
+                    'inc_views': 'views - lag(views) over (partition by channel_id order by crawled_date)',
+                    'inc_subscribers': 'subscribers - lag(subscribers) over (partition by channel_id order by crawled_date)'
+                }).values('video_id','inc_views','inc_subscribers')

@@ -68,6 +68,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework',
+    'django_celery_results',
 ]
 LOCAL_APPS = [
     'toolbox.users.apps.UsersAppConfig',
@@ -242,7 +243,7 @@ if USE_TZ:
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-broker_url
 CELERY_BROKER_URL = env('CELERY_BROKER_URL')
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-result_backend
-CELERY_RESULT_BACKEND = 'rpc'
+CELERY_RESULT_BACKEND = 'django-db'
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-accept_content
 CELERY_ACCEPT_CONTENT = ['application/json']
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#std:setting-task_serializer
@@ -278,3 +279,9 @@ YOUTUBE_RESOURCE_LIST_LIMIT = 50
 
 # Number of Groups for Scraping Channels (To ensure reasonable API hits for each service account)
 TRACKED_CHANNEL_SPLITS = 2
+
+# Timerange List
+TIMERANGE_DICT = {'daily': 2, 'weekly': 8, 'monthly': 31}
+
+# Top Resource Limit
+TOP_RESOURCE_LIMIT = 50

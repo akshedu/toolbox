@@ -19,3 +19,4 @@ class TrackedChannel(models.Model):
         channel = youtube.channels().list(id=self.channel_id, part='snippet').execute()
         if channel['pageInfo']['totalResults'] != 1:
             raise ValidationError(_('The channel ID you have entered is not valid'))
+            
