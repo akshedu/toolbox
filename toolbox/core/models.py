@@ -70,7 +70,7 @@ class VideoStats(models.Model):
 
 class TopResource(models.Model):
 	metric = models.CharField(max_length=25)
-	date = models.DateTimeField(auto_now_add=True)
+	date = models.DateField(default=datetime.date.today)
 	frequency = models.CharField(max_length=25)
 	incremental = models.BigIntegerField(null=True)
 
