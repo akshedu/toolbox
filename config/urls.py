@@ -8,14 +8,20 @@ from django.views import defaults as default_views
 
 from rest_framework.routers import DefaultRouter
 
-from toolbox.core.views import VideoViewSet, TopVideoViewSet, TopChannelViewSet, OverviewSet, TopKeywordsViewSet
+from toolbox.core.views import VideoViewSet, \
+        TopVideoViewSet, TopChannelViewSet, \
+        OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet
+
+timerange_string = "(?P<timerange>daily|weekly|monthly)"
+timerange_string_days = "(?P<timerange>7|30|90)"
 
 router = DefaultRouter()
 router.register(r'videos', VideoViewSet)
-router.register(r'top/videos', TopVideoViewSet, base_name='top_videos')
-router.register(r'top/channels', TopChannelViewSet, base_name='top_channels')
+router.register(r'top/videos/{}'.format(timerange_string), TopVideoViewSet, base_name='top_videos')
+router.register(r'top/channels/{}'.format(timerange_string), TopChannelViewSet, base_name='top_channels')
 router.register(r'overview', OverviewSet, base_name='overview')
-router.register(r'top/keywords', TopKeywordsViewSet, base_name='top_keywords')
+router.register(r'top/keywords/{}'.format(timerange_string), TopKeywordsViewSet, base_name='top_keywords')
+router.register(r'statistics/published/{}'.format(timerange_string_days), StatisticsPublishedViewSet, base_name='stats_published')
 
 urlpatterns = [
     path('api/', include(router.urls)),

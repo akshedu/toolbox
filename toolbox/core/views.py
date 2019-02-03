@@ -19,7 +19,6 @@ import pandas as pd
 
 VIDEO_ALLOWED_METRICS = ['inc_views', 'inc_likes', 'inc_comments']
 CHANNEL_ALLOWED_METRICS = ['inc_views', 'inc_subscribers']
-ALLOWED_FREQUENCY = ['daily', 'weekly', 'monthly']
 
 
 def check_input(arg, value):
@@ -41,16 +40,11 @@ class VideoViewSet(RetrieveModelMixin, GenericViewSet):
 
 
 def validate_inputs(resource, request):
-    timerange = request.query_params.get('timerange')
-    check_input('timerange', timerange)
     metric = request.query_params.get('metric')
     check_input('metric', metric)
     end_date = request.query_params.get('endDate')
     check_input('endDate', end_date)
     validate_date(end_date)
-
-    if timerange not in ALLOWED_FREQUENCY:
-        raise BadRequest('Invalid timerange')
 
     if resource == 'Video':
         if metric not in VIDEO_ALLOWED_METRICS:
@@ -60,11 +54,11 @@ def validate_inputs(resource, request):
         if metric not in CHANNEL_ALLOWED_METRICS:
             raise BadRequest('Invalid metric')
 
-    return timerange, metric, end_date
+    return metric, end_date
 
 
-def get_top_videos_df(request):
-        timerange, metric, end_date = validate_inputs('Video', request)
+def get_top_videos_df(request, timerange):
+        metric, end_date = validate_inputs('Video', request)
         top_videos_queryset = TopVideos.objects.filter(frequency=timerange, date=end_date, metric=metric)
         if not top_videos_queryset.exists():
             return None
@@ -79,8 +73,8 @@ def get_top_videos_df(request):
 
 
 class TopVideoViewSet(ViewSet):
-    def list(self, request):
-        top_videos = get_top_videos_df(request)
+    def list(self, request, timerange):
+        top_videos = get_top_videos_df(request, timerange)
         if top_videos is None:
             return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
                              'status':'failed'})
@@ -92,8 +86,8 @@ class TopVideoViewSet(ViewSet):
 
 
 class TopChannelViewSet(ViewSet):
-    def list(self, request):
-        timerange, metric, end_date = validate_inputs('Channel', request)
+    def list(self, request, timerange):
+        metric, end_date = validate_inputs('Channel', request)
         top_channels_queryset = TopChannels.objects.filter(frequency=timerange, date=end_date, metric=metric)
         if not top_channels_queryset.exists():
             return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
@@ -107,7 +101,6 @@ class TopChannelViewSet(ViewSet):
         result = {}
         result['status'] = 'success'
         result['data'] = top_channels.to_dict(orient='records')
-
         return Response(result)
 
 
@@ -122,8 +115,8 @@ class OverviewSet(ViewSet):
 
 
 class TopKeywordsViewSet(ViewSet):
-    def list(self, request):
-        top_videos = get_top_videos_df(request)
+    def list(self, request, timerange):
+        top_videos = get_top_videos_df(request, timerange)
         if top_videos is None:
             return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
                              'status':'failed'})
@@ -138,3 +131,32 @@ class TopKeywordsViewSet(ViewSet):
         result['top_keywords'] = top_keywords_incremental_df.to_dict(orient='records')
         result['top_videos'] = top_videos[top_videos.video_id.isin(top_keywords_video_ids)].to_dict(orient='records')
         return Response(result)
+
+
+class StatisticsPublishedViewSet(ViewSet):
+    def list(self, request, timerange):
+        metric, end_date = validate_inputs('Statistics', request)
+        timerange = int(timerange)
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+        start_date = end_date - datetime.timedelta(days=timerange)
+        video_published_df = pd.DataFrame(list(Video.objects.filter(published_at__range=(start_date, end_date)).values('video_id', 'published_at')))
+        video_published_df['weekday'] = video_published_df.published_at.dt.weekday_name
+        video_published_df['hour'] = video_published_df.published_at.dt.hour
+        video_published_df['hour_bins'] = pd.cut(video_published_df['hour'],bins=[0,2,4,6,8,10,12,14,16,18,20,22,24]).astype(str)
+        video_views = pd.DataFrame(list(VideoStats.objects.filter(video_id__in=video_published_df.video_id.tolist(), crawled_date=end_date).values('video_id','views')))
+        video_published_df = pd.merge(video_published_df, video_views, on='video_id')
+        video_published_df = video_published_df.groupby(['weekday', 'hour_bins'])['views'].sum().reset_index()
+        return Response(video_published_df)
+
+
+
+
+
+
+
+
+
+
+
+
+
