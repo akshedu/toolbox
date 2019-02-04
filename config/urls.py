@@ -10,7 +10,9 @@ from rest_framework.routers import DefaultRouter
 
 from toolbox.core.views import VideoViewSet, \
         TopVideoViewSet, TopChannelViewSet, \
-        OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet
+        OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet, \
+        StatisticsDurationViewSet, StatisticsVideoViewSet, \
+        StatisticsKeywordsViewSet, VideoHistory
 
 timerange_string = "(?P<timerange>daily|weekly|monthly)"
 timerange_string_days = "(?P<timerange>7|30|90)"
@@ -22,6 +24,10 @@ router.register(r'top/channels/{}'.format(timerange_string), TopChannelViewSet, 
 router.register(r'overview', OverviewSet, base_name='overview')
 router.register(r'top/keywords/{}'.format(timerange_string), TopKeywordsViewSet, base_name='top_keywords')
 router.register(r'statistics/published/{}'.format(timerange_string_days), StatisticsPublishedViewSet, base_name='stats_published')
+router.register(r'statistics/duration/{}'.format(timerange_string_days), StatisticsDurationViewSet, base_name='stats_duration')
+router.register(r'statistics/videoview/{}'.format(timerange_string_days), StatisticsVideoViewSet, base_name='stats_videoview')
+router.register(r'statistics/tags/{}'.format(timerange_string_days), StatisticsKeywordsViewSet, base_name='stats_tags')
+router.register(r'history/{}'.format(timerange_string_days), VideoHistory, base_name='views_history')
 
 urlpatterns = [
     path('api/', include(router.urls)),

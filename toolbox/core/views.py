@@ -39,6 +39,16 @@ class VideoViewSet(RetrieveModelMixin, GenericViewSet):
     lookup_field = 'video_id'
 
 
+class VideoHistory(ViewSet):
+    def list(self, request, timerange):
+        video_id = request.query_params.get('id')
+        check_input('video_id', video_id)
+        timerange = int(timerange)
+        start_date = str((datetime.datetime.today() - datetime.timedelta(days=timerange+1)).date())
+        data = VideoStats.objects.filter(video_id=video_id, crawled_date__gte=start_date).values('crawled_date','views')
+        return Response(data)
+
+
 def validate_inputs(resource, request):
     metric = request.query_params.get('metric')
     check_input('metric', metric)
@@ -63,7 +73,7 @@ def get_top_videos_df(request, timerange):
         if not top_videos_queryset.exists():
             return None
         top_video_ids = list(top_videos_queryset.values_list('video_id', flat=True))
-        top_videos_incremental = top_videos_queryset.values('video_id','video__title','incremental','metric')
+        top_videos_incremental = top_videos_queryset.values('video_id','video__title','incremental','metric', 'video__video__channel__title')
         top_video_stats = VideoStats.objects.filter(video_id__in=top_video_ids, crawled_date=end_date).values('video_id','views','likes','dislikes','comments')
         top_videos_incremental_df = pd.DataFrame(list(top_videos_incremental))
         top_videos_stats_df = pd.DataFrame(list(top_video_stats))
@@ -78,7 +88,6 @@ class TopVideoViewSet(ViewSet):
         if top_videos is None:
             return Response({'message':'Very likely scrapers failed hence data is not available. Try with another endDate',
                              'status':'failed'})
-        print(top_videos)
         result = {}
         result['status'] = 'success'
         result['data'] = top_videos.to_dict(orient='records')
@@ -142,21 +151,47 @@ class StatisticsPublishedViewSet(ViewSet):
         video_published_df = pd.DataFrame(list(Video.objects.filter(published_at__range=(start_date, end_date)).values('video_id', 'published_at')))
         video_published_df['weekday'] = video_published_df.published_at.dt.weekday_name
         video_published_df['hour'] = video_published_df.published_at.dt.hour
-        video_published_df['hour_bins'] = pd.cut(video_published_df['hour'],bins=[0,2,4,6,8,10,12,14,16,18,20,22,24]).astype(str)
+        video_published_df['hour_bins'] = pd.cut(video_published_df['hour'], bins=[0,2,4,6,8,10,12,14,16,18,20,22,24], include_lowest=True).astype(str)
         video_views = pd.DataFrame(list(VideoStats.objects.filter(video_id__in=video_published_df.video_id.tolist(), crawled_date=end_date).values('video_id','views')))
         video_published_df = pd.merge(video_published_df, video_views, on='video_id')
         video_published_df = video_published_df.groupby(['weekday', 'hour_bins'])['views'].sum().reset_index()
         return Response(video_published_df)
 
 
+class StatisticsDurationViewSet(ViewSet):
+    def list(self, request, timerange):
+        metric, end_date = validate_inputs('Statistics', request)
+        timerange = int(timerange)
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+        start_date = end_date - datetime.timedelta(days=timerange)
+        video_published_df = pd.DataFrame(list(Video.objects.filter(published_at__range=(start_date, end_date)).values('video_id', 'duration')))
+        video_published_df['duration_bins'] = pd.cut(video_published_df['duration'], bins=list(range(0,7200,10))).astype(str)
+        video_published_df = video_published_df.groupby(['duration_bins'])['video_id'].count().reset_index().rename(columns={'video_id':'video_count'})
+        return Response(video_published_df)
 
 
+class StatisticsVideoViewSet(ViewSet):
+    def list(self, request, timerange):
+        metric, end_date = validate_inputs('Statistics', request)
+        video_stats = VideoStats.objects.filter(crawled_date=end_date).values('video_id','views','likes','dislikes','comments','video__title')
+        video_stats_df = pd.DataFrame(list(video_stats))
+        video_stats_df = video_stats_df.dropna(subset=['views'])
+        video_stats_df['views_bins'] = pd.cut(video_stats_df['views'], bins=[0, 10000, 50000, 100000, 500000, 1000000, 10000000, 10000000000], include_lowest=True).astype(str)
+        video_views_df = video_stats_df.groupby(['views_bins'])['video_id'].count().reset_index().rename(columns={'video_id':'video_count'})
+        result = {}
+        result['views_distribution'] = video_views_df.to_dict()
+        result['top_videos'] = video_stats_df.replace({pd.np.nan:None}).sort_values(['views'],ascending=False).head(100 ).to_dict(orient='records')
+        return Response(result)
 
 
-
-
-
-
-
+class StatisticsKeywordsViewSet(ViewSet):
+    def list(self, request, timerange):
+        metric, end_date = validate_inputs('Statistics', request)
+        timerange = int(timerange)
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+        start_date = end_date - datetime.timedelta(days=timerange)
+        video_keywords_df = pd.DataFrame(list(Video.objects.filter(published_at__range=(start_date, end_date)).extra(select={'length':'cardinality(keywords)'}).values('video_id', 'length')))
+        video_keywords_df = video_keywords_df.groupby(['length'])['video_id'].count().reset_index().rename(columns={'video_id':'video_count'})
+        return Response(video_keywords_df)
 
 
