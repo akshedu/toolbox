@@ -14,6 +14,15 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
 
+# CORS
+CORS_ORIGIN_WHITELIST = ('toolbox.com',)
+
+CORS_ORIGIN_REGEX_WHITELIST = (
+    r'http(s?)://[\w\-]+.toolbox.com',
+    r'http(s?)://localhost:[0-9]+',
+    r'http(s?)://127.0.0.1:[0-9]+'
+)
+
 # CACHES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#caches
