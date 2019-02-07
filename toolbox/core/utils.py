@@ -24,4 +24,5 @@ def get_channel_incremental_queryset(start_date, end_date):
 def update_resource_details(resource, data):
     for attr, value in data.items():
         setattr(resource, attr, value['new'])
+    setattr(resource, 'last_updated', value)
     resource.save()

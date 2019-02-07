@@ -9,7 +9,6 @@ class Resource(models.Model):
     description = models.TextField(null=True)
     published_at = models.DateTimeField(null=True)
     last_updated = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(null=True)
     thumbnail_default_url = models.TextField(null=True)
     thumbnail_medium_url = models.TextField(null=True)
     thumbnail_high_url = models.TextField(null=True)
