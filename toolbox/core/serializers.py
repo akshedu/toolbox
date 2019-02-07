@@ -3,12 +3,10 @@ import datetime
 
 from rest_framework import serializers
 from django.core import serializers as django_serializers
-from toolbox.core.models import Video, Description, VideoStats
+from toolbox.core.models import Video, VideoStats
 
 
 class VideoSerializer(serializers.ModelSerializer):
-    description = serializers.ReadOnlyField(source='description.description')
-    thumbnail = serializers.ReadOnlyField(source='thumbnail.default_url')
     class Meta:
         model = Video
         fields = '__all__'

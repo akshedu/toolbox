@@ -1,5 +1,5 @@
 
-from toolbox.core.models import ChannelStats, VideoStats, Thumbnail, Description
+from toolbox.core.models import ChannelStats, VideoStats
 
 
 def get_video_incremental_queryset(start_date, end_date):
@@ -23,10 +23,5 @@ def get_channel_incremental_queryset(start_date, end_date):
 
 def update_resource_details(resource, data):
     for attr, value in data.items():
-        if attr == 'description':
-            Description.objects.filter(id=resource.description.id).update(description=value['new'])
-        elif attr = 'thumbnail':
-            Thumbnail.objects.filter(id=resource.thumbnail.id).update(default_url=value['new'])
-        else:
-            setattr(resource, attr, value['new'])
+        setattr(resource, attr, value['new'])
     resource.save()

@@ -10,8 +10,7 @@ from toolbox.scraper.utils import create_youtube_service, \
 from toolbox.core.utils import update_resource_details
 
 from toolbox.scraper.models import TrackedChannel
-from toolbox.core.models import Channel, ChannelStats, \
-    Thumbnail, Description, Video, \
+from toolbox.core.models import Channel, ChannelStats, Video, \
     VideoStats, ChannelVideoMap, \
     VideoHistory, ChannelHistory
 
@@ -104,14 +103,12 @@ def channel_details_task(youtube_service, channel_list, part):
         channel_id = item.get('id', None)
         channel = Channel(
                     channel_id=channel_id,
-                    description=Description.objects.create(
-                        description=item.get('snippet',{}).get('description', None)),
+                    description=tem.get('snippet',{}).get('description', None),
                     title=item.get('snippet',{}).get('title', None),
                     published_at=item.get('snippet',{}).get('publishedAt', None),
-                    thumbnail=Thumbnail.objects.create(
-                        default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
-                        medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
-                        high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None)),
+                    thumbnail_default_url=default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
+                    thumbnail_medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
+                    thumbnail_high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None),
                     country=item.get('snippet',{}).get('country', None))
 
         if not Channel.objects.filter(channel_id=channel_id).exists():
@@ -137,17 +134,15 @@ def video_details_task(youtube_service, video_list, part):
     for item in video_query_response.get('items', []):
         video_id = item.get('id', None)
         video = Video(
-                video_id=item.get('id', None),
-                description=Description.objects.create(
-                    description=item.get('snippet',{}).get('description', None)),
-                title=item.get('snippet',{}).get('title', None),
-                published_at=item.get('snippet',{}).get('publishedAt', None),
-                thumbnail=Thumbnail.objects.create(
-                    default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
-                    medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
-                    high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None)),
-                duration=isodate.parse_duration(item.get('contentDetails', {}).get('duration', None)).total_seconds(),
-                keywords=item.get('snippet', {}).get('tags', None))
+                    video_id=video_id,
+                    description=item.get('snippet',{}).get('description', None),
+                    title=item.get('snippet',{}).get('title', None),
+                    published_at=item.get('snippet',{}).get('publishedAt', None),
+                    thumbnail_default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
+                    thumbnail_medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
+                    thumbnail_high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None),
+                    duration=isodate.parse_duration(item.get('contentDetails', {}).get('duration', None)).total_seconds(),
+                    keywords=item.get('snippet', {}).get('tags', None))
 
         if not Video.objects.filter(video_id=video_id).exists():
             videos_to_create.append(video)

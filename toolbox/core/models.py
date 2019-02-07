@@ -3,23 +3,16 @@ import datetime
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
-# Create your models here.
-class Thumbnail(models.Model):
-    default_url = models.TextField(null=True)
-    medium_url = models.TextField(null=True)
-    high_url = models.TextField(null=True)
-
-
-class Description(models.Model):
-    description = models.TextField(null=True)
-
 
 class Resource(models.Model):
     title = models.CharField(max_length=255)
-    description = models.ForeignKey(Description, on_delete=models.CASCADE, null=True)
+    description = models.TextField(null=True)
     published_at = models.DateTimeField(null=True)
-    thumbnail = models.ForeignKey(Thumbnail, on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(null=True)
+    thumbnail_default_url = models.TextField(null=True)
+    thumbnail_medium_url = models.TextField(null=True)
+    thumbnail_high_url = models.TextField(null=True)
 
     def compare(self, obj):
         excluded_keys = '_state', 'last_updated', 'published_at'
@@ -31,13 +24,7 @@ class Resource(models.Model):
         for k,v in d1.items():
             if k in excluded_keys:
                 continue
-            elif k == 'description_id':
-                if obj1.description.description != obj2.description.description:
-                    diff['description'] = {'old': d1.description.description, 'new': d2.description.description}
-            elif k == 'thumbnail_id':
-                if obj2.thumbnail.default_url != obj2.thumbnail.default_url:
-                    diff['thumbnail'] = {'old': d1.thumbnail.default_url, 'new': d2.thumbnail.default_url}
-            elif v != d2[k]:
+            if v != d2[k]:
                 diff[k] = {'old': v, 'new': d2[k]}
         return diff
 
@@ -105,7 +92,6 @@ class TopVideos(TopResource):
 
 class TopChannels(TopResource):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
-
 
 
 class ResourceHistory(models.Model):
