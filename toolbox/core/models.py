@@ -22,15 +22,22 @@ class Resource(models.Model):
     last_updated = models.DateTimeField(auto_now_add=True)
 
     def compare(self, obj):
-        return self._compare(self, obj)
+        excluded_keys = '_state', 'last_updated', 'published_at'
+        return self._compare(self, obj, excluded_keys)
 
-    def _compare(self, obj1, obj2):
+    def _compare(self, obj1, obj2, excluded_keys):
         d1, d2 = obj1.__dict__, obj2.__dict__
         diff = {}
         for k,v in d1.items():
-            if k == '_state':
+            if k in excluded_keys:
                 continue
-            if v != d2[k]:
+            elif k == 'description_id':
+                if obj1.description.description != obj2.description.description:
+                    diff['description'] = {'old': d1.description.description, 'new': d2.description.description}
+            elif k == 'thumbnail_id':
+                if obj2.thumbnail.default_url != obj2.thumbnail.default_url:
+                    diff['thumbnail'] = {'old': d1.thumbnail.default_url, 'new': d2.thumbnail.default_url}
+            elif v != d2[k]:
                 diff[k] = {'old': v, 'new': d2[k]}
         return diff
 

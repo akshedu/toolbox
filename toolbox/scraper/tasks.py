@@ -4,10 +4,16 @@ import isodate
 
 from celery import shared_task
 from django.conf import settings
-from toolbox.scraper.utils import create_youtube_service, chunkify, chunks, get_channel_list, get_video_list, get_channel_videos
+from toolbox.scraper.utils import create_youtube_service, \
+    chunkify, chunks, get_channel_list, \
+    get_video_list, get_channel_videos
+from toolbox.core.utils import update_resource_details
 
 from toolbox.scraper.models import TrackedChannel
-from toolbox.core.models import Channel, ChannelStats, Thumbnail, Description, Video, VideoStats, ChannelVideoMap
+from toolbox.core.models import Channel, ChannelStats, \
+    Thumbnail, Description, Video, \
+    VideoStats, ChannelVideoMap, \
+    VideoHistory, ChannelHistory
 
 VIDEO_DETAILS_PART = 'snippet,contentDetails'
 CHANNEL_DETAILS_PART = 'snippet'
@@ -35,12 +41,9 @@ def scrape_youtube_video_chunks(video_list, service_account_file):
         youtube_service = create_youtube_service(settings.YOUTUBE_SCOPES, service_account_file)
     except Exception as e:
         print("Cannot create youtube services due to {}.".format(e))
-    video_details_list = list(Video.objects.values_list('video_id', flat=True))
-    video_details_missing = [video for video in video_list if video not in video_details_list]
 
-    if not video_details_missing == []:
-        for video_chunks in chunks(video_details_missing, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
-            video_details_task(youtube_service, video_chunks, VIDEO_DETAILS_PART)
+    for video_chunks in chunks(video_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
+        video_details_task(youtube_service, video_chunks, VIDEO_DETAILS_PART)
 
     for video_chunks in chunks(video_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
         video_stats_task(youtube_service, video_chunks, RESOURCE_STATISTICS_PART)
@@ -52,12 +55,9 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
         youtube_service = create_youtube_service(settings.YOUTUBE_SCOPES, service_account_file)
     except Exception as e:
         print("Cannot create youtube services due to {}.".format(e))
-    channel_details_list = list(Channel.objects.values_list('channel_id', flat=True))
-    channel_details_missing = [channel for channel in channel_list if channel not in channel_details_list]
 
-    if not channel_details_missing == []:
-        for channel_chunks in chunks(channel_details_missing, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
-            channel_details_task(youtube_service, channel_chunks, CHANNEL_DETAILS_PART)
+    for channel_chunks in chunks(channel_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
+        channel_details_task(youtube_service, channel_chunks, CHANNEL_DETAILS_PART)
 
     for channel in channel_list:
         channel_videos_map_task(youtube_service, channel)
@@ -101,19 +101,32 @@ def channel_details_task(youtube_service, channel_list, part):
     channel_query_response = get_channel_list(youtube_service, channel_list, part)
     channels_to_create = []
     for item in channel_query_response.get('items', []):
-        channels_to_create.append(
-            Channel(
-                channel_id=item.get('id', None),
-                description=Description.objects.create(
-                    description=item.get('snippet',{}).get('description', None)),
-                title=item.get('snippet',{}).get('title', None),
-                published_at=item.get('snippet',{}).get('publishedAt', None),
-                thumbnail=Thumbnail.objects.create(
-                    default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
-                    medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
-                    high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None)),
-                country=item.get('snippet',{}).get('country', None)))   
+        channel_id = item.get('id', None)
+        channel = Channel(
+                    channel_id=channel_id,
+                    description=Description.objects.create(
+                        description=item.get('snippet',{}).get('description', None)),
+                    title=item.get('snippet',{}).get('title', None),
+                    published_at=item.get('snippet',{}).get('publishedAt', None),
+                    thumbnail=Thumbnail.objects.create(
+                        default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
+                        medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
+                        high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None)),
+                    country=item.get('snippet',{}).get('country', None))
 
+        if not Channel.objects.filter(channel_id=channel_id).exists():
+            channels_to_create.append(channel)
+        else:     
+            old = Channel.objects.get(channel_id=channel_id)
+            diff = old.compare(channel)
+            if diff:
+                for field, d in diff.items():
+                    ChannelHistory.objects.create(
+                        channel_id=channel_id,
+                        field=field,
+                        old_value=d['old'],
+                        new_value=d['new'])
+                update_resource_details(old, diff)
     Channel.objects.bulk_create(channels_to_create)
 
 
@@ -122,8 +135,8 @@ def video_details_task(youtube_service, video_list, part):
     video_query_response = get_video_list(youtube_service, video_list, part)
     videos_to_create = []
     for item in video_query_response.get('items', []):
-        videos_to_create.append(
-            Video(
+        video_id = item.get('id', None)
+        video = Video(
                 video_id=item.get('id', None),
                 description=Description.objects.create(
                     description=item.get('snippet',{}).get('description', None)),
@@ -134,8 +147,22 @@ def video_details_task(youtube_service, video_list, part):
                     medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
                     high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None)),
                 duration=isodate.parse_duration(item.get('contentDetails', {}).get('duration', None)).total_seconds(),
-                keywords=item.get('snippet', {}).get('tags', None)))
+                keywords=item.get('snippet', {}).get('tags', None))
 
+        if not Video.objects.filter(video_id=video_id).exists():
+            videos_to_create.append(video)
+        else:
+            old = Video.objects.get(video_id=video_id)
+            diff = old.compare(video)
+            print(diff)
+            if diff:
+                for field, d in diff.items():
+                    VideoHistory.objects.create(
+                        video_id=video_id,
+                        field=field,
+                        old_value=d['old'],
+                        new_value=d['new'])
+                update_resource_details(old, diff)
     Video.objects.bulk_create(videos_to_create)
 
 
