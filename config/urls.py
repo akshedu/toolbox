@@ -12,7 +12,7 @@ from toolbox.core.views import VideoViewSet, \
         TopVideoViewSet, TopChannelViewSet, \
         OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet, \
         StatisticsDurationViewSet, StatisticsVideoViewSet, \
-        StatisticsKeywordsViewSet, VideoHistory
+        StatisticsKeywordsViewSet, VideoHistory, StatisticsUploadsViewSet
 
 timerange_string = "(?P<timerange>daily|weekly|monthly)"
 timerange_string_days = "(?P<timerange>7|30|90)"
@@ -28,6 +28,7 @@ router.register(r'statistics/duration/{}'.format(timerange_string_days), Statist
 router.register(r'statistics/videoview/{}'.format(timerange_string_days), StatisticsVideoViewSet, base_name='stats_videoview')
 router.register(r'statistics/tags/{}'.format(timerange_string_days), StatisticsKeywordsViewSet, base_name='stats_tags')
 router.register(r'history/{}'.format(timerange_string_days), VideoHistory, base_name='views_history')
+router.register(r'statistics/uploads/{}'.format(timerange_string_days), StatisticsUploadsViewSet, base_name='stats_uploads')
 
 urlpatterns = [
     path('api/', include(router.urls)),
