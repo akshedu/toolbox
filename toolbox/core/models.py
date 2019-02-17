@@ -5,10 +5,11 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class Resource(models.Model):
+    added = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=255)
     description = models.TextField(null=True)
     published_at = models.DateTimeField(null=True)
-    last_updated = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
     thumbnail_default_url = models.TextField(null=True)
     thumbnail_medium_url = models.TextField(null=True)
     thumbnail_high_url = models.TextField(null=True)
