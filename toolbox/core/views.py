@@ -22,6 +22,10 @@ import pandas as pd
 VIDEO_ALLOWED_METRICS = ['inc_views', 'inc_likes', 'inc_comments']
 CHANNEL_ALLOWED_METRICS = ['inc_views', 'inc_subscribers']
 
+TIMERANGE_DICT = {'daily': 1,
+                  'weekly': 7,
+                  'monthly': 30}
+
 
 def check_input(arg, value):
     if value is None or value == '':
@@ -315,9 +319,10 @@ class StatisticsUploadsViewSet(ViewSet):
 
 
 class ChannelTopVideosViewSet(ViewSet):
-    def list(self, request, channel_id, timerange):
+    def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
-        timerange = int(timerange)
+        timerange = TIMERANGE_DICT[timerange]
+        channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
         df = get_channel_top_incremental_videos(channel_id, start_date, end_date)
@@ -325,17 +330,19 @@ class ChannelTopVideosViewSet(ViewSet):
 
 
 class ChannelAllVideosViewSet(ViewSet):
-    def list(self, request, channel_id):
+    def list(self, request):
         metric, end_date = validate_inputs('Channel', request)
+        channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         df = get_channel_all_videos(channel_id, end_date)
         return Response(df.to_dict(orient='records'))
 
 
 class ChannelDailyStatsViewSet(ViewSet):
-    def list(self, request, channel_id, timerange):
+    def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
-        timerange = int(timerange)
+        timerange = TIMERANGE_DICT[timerange]
+        channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
         df = get_channel_daily_stats(channel_id, start_date, end_date)

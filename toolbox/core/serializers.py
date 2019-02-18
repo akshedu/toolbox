@@ -1,9 +1,10 @@
 
 import datetime
+import pandas as pd
 
 from rest_framework import serializers
 from django.core import serializers as django_serializers
-from toolbox.core.models import Video, VideoStats, ChannelStats
+from toolbox.core.models import Video, VideoStats, ChannelStats, Channel, ChannelVideoMap
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -25,7 +26,7 @@ class VideoSerializer(serializers.ModelSerializer):
 
 class ChannelSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Video
+        model = Channel
         fields = '__all__'
 
     def to_representation(self, instance):
@@ -36,9 +37,17 @@ class ChannelSerializer(serializers.ModelSerializer):
                         .values('channel_id','views','subscribers','video_count','crawled_date')[0]
         obj['stats'] = stats
 
-        Video.objects.filter(
-                        video__channel=instance)
-
+        video_list = list(ChannelVideoMap.objects.filter(
+            channel_id=instance.channel_id).values_list('video_id', flat=True))
+        video_df = pd.DataFrame(list(VideoStats.objects.filter(crawled_date=yesterday, video_id__in=video_list).values(
+            'video_id', 'views')))
+        video_df['views_bins'] = pd.cut(video_df['views'], bins=[0, 100, 500, 1000, 5000, 10000, 
+                                                                30000, 50000, 100000, 200000, 500000, 
+                                                                1000000, 2000000, 3000000, 5000000, 
+                                                                10000000,20000000, 30000000, 50000000,
+                                                                10000000000], include_lowest=True).astype(str)
+        views_distribution = video_df.groupby('views_bins')['video_id'].count().reset_index().rename(columns={'video_id': 'video_count'})
+        obj['views_distribution'] = views_distribution.to_dict()
         return obj
 
 
