@@ -13,7 +13,8 @@ from toolbox.core.views import VideoViewSet, \
         OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet, \
         StatisticsDurationViewSet, StatisticsVideoViewSet, \
         StatisticsKeywordsViewSet, VideoHistory, StatisticsUploadsViewSet, \
-        ChannelTopVideosViewSet, ChannelViewSet
+        ChannelTopVideosViewSet, ChannelViewSet, ChannelAllVideosViewSet, \
+        ChannelDailyStatsViewSet
 
 timerange_string = "(?P<timerange>daily|weekly|monthly)"
 timerange_string_days = "(?P<timerange>7|30|90)"
@@ -31,7 +32,9 @@ router.register(r'statistics/videoview/{}'.format(timerange_string_days), Statis
 router.register(r'statistics/tags/{}'.format(timerange_string_days), StatisticsKeywordsViewSet, base_name='stats_tags')
 router.register(r'history/{}'.format(timerange_string_days), VideoHistory, base_name='views_history')
 router.register(r'statistics/uploads/{}'.format(timerange_string_days), StatisticsUploadsViewSet, base_name='stats_uploads')
-router.register(r'channels/topvideos/{}'.format(timerange_string), ChannelTopVideosViewSet, base_name='channel_top_videos')
+router.register(r'channel/topvideos/{}'.format(timerange_string), ChannelTopVideosViewSet, base_name='channel_top_videos')
+router.register(r'channel/allvideos', ChannelAllVideosViewSet, base_name='channel_all_videos')
+router.register(r'channel/dailystats/{}'.format(timerange_string_days), ChannelDailyStatsViewSet, base_name='channel_daily_stats')
 
 urlpatterns = [
     path('api/', include(router.urls)),

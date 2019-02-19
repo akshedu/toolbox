@@ -6,8 +6,9 @@ from toolbox.core.models import Video, VideoStats, ChannelVideoMap, Channel
 from toolbox.core.models import TopVideos, TopChannels, ChannelStats
 from toolbox.scraper.models import TrackedChannel
 from toolbox.core.serializers import VideoSerializer, ChannelSerializer
-from toolbox.core.utils import get_video_incremental_queryset, \
-    get_channel_incremental_queryset
+from toolbox.core.utils import get_channel_top_incremental_videos, \
+    get_channel_all_videos, get_channel_daily_stats, get_published_count_timerange, \
+    get_published_bins_timerange, get_duration_statistics, get_tags_statistics
 
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ViewSet
@@ -37,36 +38,6 @@ def validate_date(date_text):
         datetime.datetime.strptime(date_text, '%Y-%m-%d')
     except ValueError:
         raise BadRequest('Bad date: %s' % date_text)
-
-
-def get_channel_top_incremental_videos(channel_id, start_date, end_date):
-    video_list = list(ChannelVideoMap.objects.filter(
-        channel_id=channel_id).values_list('video_id', flat=True))
-    video_incremental = get_video_incremental_queryset(
-        start_date, end_date, video_list)
-    video_incremental_df = pd.DataFrame(list(video_incremental))
-    video_incremental_df = video_incremental_df.sort_values(
-        'inc_views', ascending=False).head(50)
-    return video_incremental_df
-
-
-def get_channel_all_videos(channel_id, end_date):
-    video_list = list(ChannelVideoMap.objects.filter(
-        channel_id=channel_id).values_list('video_id', flat=True))
-    video_df = VideoStats.objects.filter(crawled_date=end_date, video_id__in=video_list).values(
-        'video_id', 'views', 'likes', 'dislikes', 'comments', 'video__title', 'video__published_at', 'video__thumbnail_default_url')
-    return video_df
-
-
-def get_channel_daily_stats(channel_id, start_date, end_date):
-    channel_incremental = get_channel_incremental_queryset(
-        start_date, end_date, channel_id)
-    channel_incremental_df = pd.DataFrame(list(channel_incremental))
-    channel_incremental_df['crawled_date'] = pd.to_datetime(
-        channel_incremental_df.crawled_date)
-    channel_incremental_df['day'] = channel_incremental_df.crawled_date.dt.day_name(
-    )
-    return channel_incremental_df
 
 
 class VideoViewSet(RetrieveModelMixin, GenericViewSet):
@@ -223,18 +194,8 @@ class StatisticsPublishedViewSet(ViewSet):
         timerange = int(timerange)
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
-        video_published_df = pd.DataFrame(list(Video.objects.filter(
-            published_at__range=(start_date, end_date)).values('video_id', 'published_at')))
-        video_published_df['weekday'] = video_published_df.published_at.dt.weekday_name
-        video_published_df['hour'] = video_published_df.published_at.dt.hour
-        video_published_df['hour_bins'] = pd.cut(video_published_df['hour'], bins=[
-                                                 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24], include_lowest=True).astype(str)
-        video_views = pd.DataFrame(list(VideoStats.objects.filter(
-            video_id__in=video_published_df.video_id.tolist(), crawled_date=end_date).values('video_id', 'views')))
-        video_published_df = pd.merge(
-            video_published_df, video_views, on='video_id')
-        video_published_df = video_published_df.groupby(['weekday', 'hour_bins'])[
-            'views'].sum().reset_index()
+        channel_id = request.query_params.get('channel_id')
+        video_published_df = get_published_bins_timerange(start_date, end_date, channel_id)
         return Response(video_published_df)
 
 
@@ -244,12 +205,8 @@ class StatisticsDurationViewSet(ViewSet):
         timerange = int(timerange)
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
-        video_published_df = pd.DataFrame(list(Video.objects.filter(
-            published_at__range=(start_date, end_date)).values('video_id', 'duration')))
-        video_published_df['duration_bins'] = pd.cut(
-            video_published_df['duration'], bins=list(range(0, 7200, 10))).astype(str)
-        video_published_df = video_published_df.groupby(['duration_bins'])[
-            'video_id'].count().reset_index().rename(columns={'video_id': 'video_count'})
+        channel_id = request.query_params.get('channel_id')
+        video_published_df = get_duration_statistics(start_date, end_date, channel_id)
         return Response(video_published_df)
 
 
@@ -277,10 +234,8 @@ class StatisticsKeywordsViewSet(ViewSet):
         timerange = int(timerange)
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
-        video_keywords_df = pd.DataFrame(list(Video.objects.filter(published_at__range=(
-            start_date, end_date)).extra(select={'length': 'cardinality(keywords)'}).values('video_id', 'length')))
-        video_keywords_df = video_keywords_df.groupby(['length'])['video_id'].count(
-        ).reset_index().rename(columns={'video_id': 'video_count'})
+        channel_id = request.query_params.get('channel_id')
+        video_keywords_df = get_tags_statistics(start_date, end_date, channel_id)
         return Response(video_keywords_df)
 
 
@@ -290,20 +245,12 @@ class StatisticsUploadsViewSet(ViewSet):
         timerange = int(timerange)
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
-        video_published_df = pd.DataFrame(list(ChannelVideoMap.objects.filter(
-            video__published_at__range=(start_date, end_date)).values('channel_id', 'video_id')))
-        video_published_df = video_published_df.groupby('channel_id').count(
-        ).reset_index().rename(columns={'video_id': 'published_count'})
+        channel_id = request.query_params.get('channel_id')
+        video_published_df = get_published_count_timerange(start_date, end_date, timerange, channel_id)
         channel_subscribers_df = pd.DataFrame(list(ChannelStats.objects.filter(channel_id__in=video_published_df.channel_id.unique(
         ).tolist(), crawled_date=end_date).values('channel_id', 'views', 'video_count', 'subscribers')))
         video_channel_df = pd.merge(
             video_published_df, channel_subscribers_df, on='channel_id')
-        if timerange == 7:
-            video_channel_df['uploads_per_week'] = video_channel_df['published_count']
-        if timerange == 30:
-            video_channel_df['uploads_per_week'] = video_channel_df['published_count'] / 4
-        if timerange == 90:
-            video_channel_df['uploads_per_week'] = video_channel_df['published_count'] / 12
         results = {}
         results['top_channels'] = video_channel_df.sort_values(
             'uploads_per_week', ascending=False).to_dict(orient='records')
@@ -341,7 +288,7 @@ class ChannelAllVideosViewSet(ViewSet):
 class ChannelDailyStatsViewSet(ViewSet):
     def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
-        timerange = TIMERANGE_DICT[timerange]
+        timerange = int(timerange)
         channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)

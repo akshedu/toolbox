@@ -5,6 +5,7 @@ import pandas as pd
 from rest_framework import serializers
 from django.core import serializers as django_serializers
 from toolbox.core.models import Video, VideoStats, ChannelStats, Channel, ChannelVideoMap
+from toolbox.core.utils import get_published_count_timerange
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -31,11 +32,15 @@ class ChannelSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         obj = super().to_representation(instance)
-        yesterday = str((datetime.datetime.today() - datetime.timedelta(days=1)).date())
+        yesterday = (datetime.datetime.today() - datetime.timedelta(days=1)).date()
+        timerange = 30
+        start_date = yesterday - datetime.timedelta(days=timerange)
+        yesterday = str(yesterday)
         stats = ChannelStats.objects.filter(
                         channel=instance, crawled_date=yesterday)\
                         .values('channel_id','views','subscribers','video_count','crawled_date')[0]
         obj['stats'] = stats
+        obj['uploads_per_week'] = get_published_count_timerange(start_date, yesterday, timerange, channel_id=instance.channel_id).uploads_per_week.iloc[0]
 
         video_list = list(ChannelVideoMap.objects.filter(
             channel_id=instance.channel_id).values_list('video_id', flat=True))
