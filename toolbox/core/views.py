@@ -3,6 +3,7 @@ from itertools import chain
 import datetime
 
 from toolbox.core.models import Video, VideoStats, ChannelVideoMap, Channel
+from toolbox.core.paginator import ViewPaginatorMixin
 from toolbox.core.models import TopVideos, TopChannels, ChannelStats
 from toolbox.scraper.models import TrackedChannel
 from toolbox.core.serializers import VideoSerializer, ChannelSerializer
@@ -276,13 +277,14 @@ class ChannelTopVideosViewSet(ViewSet):
         return Response(df.to_dict(orient='records'))
 
 
-class ChannelAllVideosViewSet(ViewSet):
+class ChannelAllVideosViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request):
         metric, end_date = validate_inputs('Channel', request)
         channel_id = request.query_params.get('channel_id')
+        page = int(request.query_params.get('page'))
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         df = get_channel_all_videos(channel_id, end_date)
-        return Response(df.to_dict(orient='records'))
+        return Response(self.paginate(df.to_dict(orient='records'), page))
 
 
 class ChannelDailyStatsViewSet(ViewSet):
