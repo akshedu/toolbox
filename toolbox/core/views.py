@@ -115,21 +115,25 @@ def get_top_videos_df(request, timerange):
     return top_videos
 
 
-class TopVideoViewSet(ViewSet):
+class TopVideoViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         top_videos = get_top_videos_df(request, timerange)
         if top_videos is None:
             return Response({'message': 'Very likely scrapers failed hence data is not available. Try with another endDate',
                              'status': 'failed'})
         result = {}
         result['status'] = 'success'
-        result['data'] = top_videos.to_dict(orient='records')
+        result['data'] = self.paginate(top_videos.to_dict(orient='records'), page, limit)
         return Response(result)
 
 
-class TopChannelViewSet(ViewSet):
+class TopChannelViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         top_channels_queryset = TopChannels.objects.filter(
             frequency=timerange, date=end_date, metric=metric)
         if not top_channels_queryset.exists():
@@ -148,7 +152,7 @@ class TopChannelViewSet(ViewSet):
             top_channels_incremental_df, top_channels_stats_df, on='channel_id')
         result = {}
         result['status'] = 'success'
-        result['data'] = top_channels.to_dict(orient='records')
+        result['data'] = self.paginate(top_channels.to_dict(orient='records'), page, limit)
         return Response(result)
 
 
@@ -159,15 +163,17 @@ class OverviewSet(ViewSet):
             active=True).count()
         data['total_tracked_videos'] = Video.objects.count()
         data['total_views'] = VideoStats.objects.filter(
-            crawled_date=timezone.now()).aggregate(Sum('views'))['views__sum']
+            crawled_date=(datetime.datetime.today() - datetime.timedelta(days=1)).date()).aggregate(Sum('views'))['views__sum']
         data['total_subscribers'] = ChannelStats.objects.filter(
-            crawled_date=timezone.now()).aggregate(Sum('subscribers'))['subscribers__sum']
+            crawled_date=(datetime.datetime.today() - datetime.timedelta(days=1)).date()).aggregate(Sum('subscribers'))['subscribers__sum']
         return Response(data)
 
 
-class TopKeywordsViewSet(ViewSet):
+class TopKeywordsViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
         top_videos = get_top_videos_df(request, timerange)
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         if top_videos is None:
             return Response({'message': 'Very likely scrapers failed hence data is not available. Try with another endDate',
                              'status': 'failed'})
@@ -184,8 +190,7 @@ class TopKeywordsViewSet(ViewSet):
         result = {}
         result['top_keywords'] = top_keywords_incremental_df.to_dict(
             orient='records')
-        result['top_videos'] = top_videos[top_videos.video_id.isin(
-            top_keywords_video_ids)].to_dict(orient='records')
+        result['top_videos'] = self.paginate(top_videos[top_videos.video_id.isin(top_keywords_video_ids)].to_dict(orient='records'), page, limit)
         return Response(result)
 
 
@@ -211,9 +216,11 @@ class StatisticsDurationViewSet(ViewSet):
         return Response(video_published_df)
 
 
-class StatisticsVideoViewSet(ViewSet):
+class StatisticsVideoViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
         metric, end_date = validate_inputs('Statistics', request)
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         video_stats = VideoStats.objects.filter(crawled_date=end_date).values(
             'video_id', 'views', 'likes', 'dislikes', 'comments', 'video__title')
         video_stats_df = pd.DataFrame(list(video_stats))
@@ -224,8 +231,8 @@ class StatisticsVideoViewSet(ViewSet):
         ).reset_index().rename(columns={'video_id': 'video_count'})
         result = {}
         result['views_distribution'] = video_views_df.to_dict()
-        result['top_videos'] = video_stats_df.replace({pd.np.nan: None}).sort_values(
-            ['views'], ascending=False).head(100).to_dict(orient='records')
+        result['top_videos'] = self.paginate(video_stats_df.replace({pd.np.nan: None}).sort_values(
+            ['views'], ascending=False).head(100).to_dict(orient='records'), page, limit)
         return Response(result)
 
 
@@ -266,15 +273,17 @@ class StatisticsUploadsViewSet(ViewSet):
         return Response(results)
 
 
-class ChannelTopVideosViewSet(ViewSet):
+class ChannelTopVideosViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         timerange = TIMERANGE_DICT[timerange]
         channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
         df = get_channel_top_incremental_videos(channel_id, start_date, end_date)
-        return Response(df.to_dict(orient='records'))
+        return Response(self.paginate(df.to_dict(orient='records'), page, limit))
 
 
 class ChannelAllVideosViewSet(ViewPaginatorMixin, ViewSet):
@@ -282,17 +291,20 @@ class ChannelAllVideosViewSet(ViewPaginatorMixin, ViewSet):
         metric, end_date = validate_inputs('Channel', request)
         channel_id = request.query_params.get('channel_id')
         page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         df = get_channel_all_videos(channel_id, end_date)
-        return Response(self.paginate(df.to_dict(orient='records'), page))
+        return Response(self.paginate(df.to_dict(orient='records'), page, limit))
 
 
-class ChannelDailyStatsViewSet(ViewSet):
+class ChannelDailyStatsViewSet(ViewPaginatorMixin, ViewSet):
     def list(self, request, timerange):
         metric, end_date = validate_inputs('Channel', request)
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
         timerange = int(timerange)
         channel_id = request.query_params.get('channel_id')
         end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         start_date = end_date - datetime.timedelta(days=timerange)
         df = get_channel_daily_stats(channel_id, start_date, end_date)
-        return Response(df.to_dict(orient='records'))
+        return Response(self.paginate(df.to_dict(orient='records'), page, limit))

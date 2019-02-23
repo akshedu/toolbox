@@ -15,7 +15,7 @@ class Resource(models.Model):
     thumbnail_high_url = models.TextField(null=True)
 
     def compare(self, obj):
-        excluded_keys = '_state', 'last_updated', 'published_at'
+        excluded_keys = '_state', 'last_updated', 'published_at', 'added'
         return self._compare(self, obj, excluded_keys)
 
     def _compare(self, obj1, obj2, excluded_keys):

@@ -14,7 +14,7 @@ from toolbox.core.views import VideoViewSet, \
         StatisticsDurationViewSet, StatisticsVideoViewSet, \
         StatisticsKeywordsViewSet, VideoHistory, StatisticsUploadsViewSet, \
         ChannelTopVideosViewSet, ChannelViewSet, ChannelAllVideosViewSet, \
-        ChannelDailyStatsViewSet
+        ChannelDailyStatsViewSet, ChannelHistory
 
 timerange_string = "(?P<timerange>daily|weekly|monthly)"
 timerange_string_days = "(?P<timerange>7|30|90)"
@@ -30,8 +30,9 @@ router.register(r'statistics/published/{}'.format(timerange_string_days), Statis
 router.register(r'statistics/duration/{}'.format(timerange_string_days), StatisticsDurationViewSet, base_name='stats_duration')
 router.register(r'statistics/videoview/{}'.format(timerange_string_days), StatisticsVideoViewSet, base_name='stats_videoview')
 router.register(r'statistics/tags/{}'.format(timerange_string_days), StatisticsKeywordsViewSet, base_name='stats_tags')
-router.register(r'history/{}'.format(timerange_string_days), VideoHistory, base_name='views_history')
 router.register(r'statistics/uploads/{}'.format(timerange_string_days), StatisticsUploadsViewSet, base_name='stats_uploads')
+router.register(r'history/video/{}'.format(timerange_string_days), VideoHistory, base_name='video_views_history')
+router.register(r'history/channel/{}'.format(timerange_string_days), ChannelHistory, base_name='channel_views_history')
 router.register(r'channel/topvideos/{}'.format(timerange_string), ChannelTopVideosViewSet, base_name='channel_top_videos')
 router.register(r'channel/allvideos', ChannelAllVideosViewSet, base_name='channel_all_videos')
 router.register(r'channel/dailystats/{}'.format(timerange_string_days), ChannelDailyStatsViewSet, base_name='channel_daily_stats')

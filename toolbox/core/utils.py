@@ -58,12 +58,14 @@ def get_channel_all_videos(channel_id, end_date):
 def get_channel_daily_stats(channel_id, start_date, end_date):
     channel_incremental = get_channel_incremental_queryset(
         start_date, end_date, channel_id)
+    print(channel_incremental)
     channel_incremental_df = pd.DataFrame(list(channel_incremental))
     channel_incremental_df = channel_incremental_df[channel_incremental_df.crawled_date != start_date.date()]
     channel_incremental_df['crawled_date'] = pd.to_datetime(
         channel_incremental_df.crawled_date)
     channel_incremental_df['day'] = channel_incremental_df.crawled_date.dt.day_name(
     )
+    channel_incremental_df = channel_incremental_df.dropna(subset=['inc_views'])
     return channel_incremental_df
 
 
@@ -73,7 +75,7 @@ def get_published_count_timerange(start_date, end_date, timerange, channel_id=No
             video__published_at__range=(start_date, end_date),channel_id=channel_id).values('channel_id', 'video_id')))
     else:
         video_published_df = pd.DataFrame(list(ChannelVideoMap.objects.filter(
-            video__published_at__range=(start_date, end_date)).values('channel_id', 'video_id')))   
+            video__published_at__range=(start_date, end_date)).values('channel_id', 'video_id')))
     video_published_df = video_published_df.groupby('channel_id').count(
     ).reset_index().rename(columns={'video_id': 'published_count'})
     if timerange == 7:
