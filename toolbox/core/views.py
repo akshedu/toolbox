@@ -4,9 +4,10 @@ import datetime
 
 from toolbox.core.models import Video, VideoStats, ChannelVideoMap, Channel
 from toolbox.core.paginator import ViewPaginatorMixin
-from toolbox.core.models import TopVideos, TopChannels, ChannelStats
+from toolbox.core.models import TopVideos, TopChannels, ChannelStats, VideoHistory, ChannelHistory
 from toolbox.scraper.models import TrackedChannel
-from toolbox.core.serializers import VideoSerializer, ChannelSerializer
+from toolbox.core.serializers import VideoSerializer, ChannelSerializer, VideoDetailsHistorySerializer, \
+    ChannelDetailsHistorySerializer
 from toolbox.core.utils import get_channel_top_incremental_videos, \
     get_channel_all_videos, get_channel_daily_stats, get_published_count_timerange, \
     get_published_bins_timerange, get_duration_statistics, get_tags_statistics
@@ -41,6 +42,24 @@ def validate_date(date_text):
         raise BadRequest('Bad date: %s' % date_text)
 
 
+class VideoDetailsHistory(ViewPaginatorMixin, ViewSet):
+    def list(self, request):
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
+        video_id = request.query_params.get('video_id')
+        queryset = VideoHistory.objects.filter(video_id=video_id)
+        return Response(self.paginate(VideoDetailsHistorySerializer(queryset, many=True).data, page, limit))
+
+
+class ChannelDetailsHistory(ViewPaginatorMixin, ViewSet):
+    def list(self, request):
+        page = int(request.query_params.get('page'))
+        limit = int(request.query_params.get('limit'))
+        channel_id = request.query_params.get('channel_id')
+        queryset = ChannelHistory.objects.filter(channel_id=channel_id)
+        return Response(self.paginate(ChannelDetailsHistorySerializer(queryset, many=True).data, page, limit))
+
+
 class VideoViewSet(RetrieveModelMixin, GenericViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
@@ -53,7 +72,7 @@ class ChannelViewSet(RetrieveModelMixin, GenericViewSet):
     lookup_field = 'channel_id'
 
 
-class VideoHistory(ViewSet):
+class VideoStatsHistory(ViewSet):
     def list(self, request, timerange):
         video_id = request.query_params.get('id')
         check_input('video_id', video_id)
@@ -65,7 +84,7 @@ class VideoHistory(ViewSet):
         return Response(data)
 
 
-class ChannelHistory(ViewSet):
+class ChannelStatsHistory(ViewSet):
     def list(self, request, timerange):
         channel_id = request.query_params.get('id')
         check_input('channel_id', channel_id)

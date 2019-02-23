@@ -12,9 +12,10 @@ from toolbox.core.views import VideoViewSet, \
         TopVideoViewSet, TopChannelViewSet, \
         OverviewSet, TopKeywordsViewSet, StatisticsPublishedViewSet, \
         StatisticsDurationViewSet, StatisticsVideoViewSet, \
-        StatisticsKeywordsViewSet, VideoHistory, StatisticsUploadsViewSet, \
+        StatisticsKeywordsViewSet, VideoStatsHistory, StatisticsUploadsViewSet, \
         ChannelTopVideosViewSet, ChannelViewSet, ChannelAllVideosViewSet, \
-        ChannelDailyStatsViewSet, ChannelHistory
+        ChannelDailyStatsViewSet, ChannelStatsHistory, ChannelDetailsHistory, \
+        VideoDetailsHistory
 
 timerange_string = "(?P<timerange>daily|weekly|monthly)"
 timerange_string_days = "(?P<timerange>7|30|90)"
@@ -31,11 +32,13 @@ router.register(r'statistics/duration/{}'.format(timerange_string_days), Statist
 router.register(r'statistics/videoview/{}'.format(timerange_string_days), StatisticsVideoViewSet, base_name='stats_videoview')
 router.register(r'statistics/tags/{}'.format(timerange_string_days), StatisticsKeywordsViewSet, base_name='stats_tags')
 router.register(r'statistics/uploads/{}'.format(timerange_string_days), StatisticsUploadsViewSet, base_name='stats_uploads')
-router.register(r'history/video/{}'.format(timerange_string_days), VideoHistory, base_name='video_views_history')
-router.register(r'history/channel/{}'.format(timerange_string_days), ChannelHistory, base_name='channel_views_history')
+router.register(r'history/video/{}'.format(timerange_string_days), VideoStatsHistory, base_name='video_views_history')
+router.register(r'history/channel/{}'.format(timerange_string_days), ChannelStatsHistory, base_name='channel_views_history')
 router.register(r'channel/topvideos/{}'.format(timerange_string), ChannelTopVideosViewSet, base_name='channel_top_videos')
 router.register(r'channel/allvideos', ChannelAllVideosViewSet, base_name='channel_all_videos')
 router.register(r'channel/dailystats/{}'.format(timerange_string_days), ChannelDailyStatsViewSet, base_name='channel_daily_stats')
+router.register(r'fieldhistory/channel', ChannelDetailsHistory, base_name='channel_details_history')
+router.register(r'fieldhistory/video', VideoDetailsHistory, base_name='video_details_history')
 
 urlpatterns = [
     path('api/', include(router.urls)),

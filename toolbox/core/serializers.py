@@ -4,7 +4,7 @@ import pandas as pd
 
 from rest_framework import serializers
 from django.core import serializers as django_serializers
-from toolbox.core.models import Video, VideoStats, ChannelStats, Channel, ChannelVideoMap
+from toolbox.core.models import Video, VideoStats, ChannelStats, Channel, ChannelVideoMap, VideoHistory, ChannelHistory
 from toolbox.core.utils import get_published_count_timerange
 
 
@@ -23,6 +23,20 @@ class VideoSerializer(serializers.ModelSerializer):
         obj['stats'] = stats
 
         return obj
+
+
+class VideoDetailsHistorySerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='video.title')
+    class Meta:
+        model = VideoHistory
+        fields = '__all__'
+
+
+class ChannelDetailsHistorySerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='channel.title')
+    class Meta:
+        model = ChannelHistory
+        fields = '__all__'
 
 
 class ChannelSerializer(serializers.ModelSerializer):
