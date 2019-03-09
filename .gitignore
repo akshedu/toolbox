@@ -288,3 +288,6 @@ toolbox/media/
 
 ## Data
 *.csv
+
+# Logs
+*.logs

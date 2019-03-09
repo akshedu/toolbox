@@ -1,6 +1,7 @@
 
 from __future__ import absolute_import
 import isodate
+import datetime
 
 from celery import shared_task
 from django.conf import settings
@@ -20,6 +21,8 @@ CHANNEL_DETAILS_PART = 'snippet,statistics'
 @shared_task
 def scrape_youtube_channels():
     channel_list = list(TrackedChannel.objects.values_list('channel_id', flat=True))
+    scraped_channels = list(Channel.objects.filter(last_scraped=datetime.date.today()).values_list('channel_id', flat=True))
+    channel_list = [x for x in channel_list if x not in scraped_channels]
     channel_chunks = list(chunkify(channel_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_channel_chunks.delay(channel_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
@@ -28,6 +31,8 @@ def scrape_youtube_channels():
 @shared_task
 def scrape_youtube_videos():
     video_list = list(ChannelVideoMap.objects.values_list('video_id', flat=True))
+    scraped_videos = list(Video.objects.filter(last_scraped=datetime.date.today()).values_list('video_id', flat=True))
+    video_list = [x for x in video_list if x not in scraped_videos]
     video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
@@ -39,6 +44,7 @@ def scrape_youtube_video_chunks(video_list, service_account_file):
         youtube_service = create_youtube_service(settings.YOUTUBE_SCOPES, service_account_file)
     except Exception as e:
         print("Cannot create youtube services due to {}.".format(e))
+        return False
 
     for video_chunks in chunks(video_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
         video_details_task(youtube_service, video_chunks, VIDEO_DETAILS_PART)
@@ -50,6 +56,7 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
         youtube_service = create_youtube_service(settings.YOUTUBE_SCOPES, service_account_file)
     except Exception as e:
         print("Cannot create youtube services due to {}.".format(e))
+        return False
 
     for channel_chunks in chunks(channel_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
         channel_details_task(youtube_service, channel_chunks, CHANNEL_DETAILS_PART)
@@ -77,6 +84,7 @@ def channel_details_task(youtube_service, channel_list, part):
     channel_query_response = get_channel_list(youtube_service, channel_list, part)
     channels_to_create = []
     channel_stats_to_create = []
+    channel_id_list = []
     for item in channel_query_response.get('items', []):
         channel_id = item.get('id', None)
         channel = Channel(
@@ -110,9 +118,11 @@ def channel_details_task(youtube_service, channel_list, part):
                         old_value=d['old'],
                         new_value=d['new'])
                 update_resource_details(old, diff)
+        channel_id_list.append(channel_id)
 
     Channel.objects.bulk_create(channels_to_create)
     ChannelStats.objects.bulk_create(channel_stats_to_create)
+    Channel.objects.filter(channel_id__in=channel_id_list).update(last_scraped=datetime.date.today())
 
 
 #@shared_task
@@ -120,6 +130,7 @@ def video_details_task(youtube_service, video_list, part):
     video_query_response = get_video_list(youtube_service, video_list, part)
     videos_to_create = []
     video_stats_to_create = []
+    video_id_list = []
     for item in video_query_response.get('items', []):
         video_id = item.get('id', None)
         video = Video(
@@ -155,7 +166,9 @@ def video_details_task(youtube_service, video_list, part):
                         old_value=d['old'],
                         new_value=d['new'])
                 update_resource_details(old, diff)
+        video_id_list.append(video_id)
 
     Video.objects.bulk_create(videos_to_create)
     VideoStats.objects.bulk_create(video_stats_to_create)
+    Video.objects.filter(video_id__in=video_id_list).update(last_scraped=datetime.date.today())
 

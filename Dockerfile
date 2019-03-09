@@ -4,5 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 
 RUN mkdir /src
 WORKDIR /src
-ADD . /src/
+ADD requirements/ /src/requirements/
 RUN pip install -r requirements/local.txt
+
+ADD . /src/

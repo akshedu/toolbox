@@ -13,9 +13,10 @@ class Resource(models.Model):
     thumbnail_default_url = models.TextField(null=True)
     thumbnail_medium_url = models.TextField(null=True)
     thumbnail_high_url = models.TextField(null=True)
+    last_scraped = models.DateField(default=datetime.date.today)
 
     def compare(self, obj):
-        excluded_keys = '_state', 'last_updated', 'published_at', 'added'
+        excluded_keys = '_state', 'last_updated', 'published_at', 'added', 'last_scraped'
         return self._compare(self, obj, excluded_keys)
 
     def _compare(self, obj1, obj2, excluded_keys):

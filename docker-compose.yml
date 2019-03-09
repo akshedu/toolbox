@@ -5,15 +5,37 @@ services:
     image: postgres:10.4
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
     ports:
       - "8000:8000"
     depends_on:
       - db
+      - rabbitmq
+      - worker
+    links:
+      - db
+      - rabbitmq
+      - worker
+
+  rabbitmq:
+    image: rabbitmq:3.7.10-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+      - 25672:25672
+
+  worker:
+    build: .
+    command: celery -A config worker --loglevel=info -f celery.logs
+    links:
+      - rabbitmq
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/src
 
 volumes:
   postgres_data:
