@@ -5,4 +5,4 @@ echo "Apply database migrations"
 python manage.py migrate
 
 echo "start celery worker"
-celery -A config worker --loglevel=info -f celery.logs
+celery -A config worker --loglevel=info -f worker.logs
