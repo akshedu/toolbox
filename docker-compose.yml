@@ -4,7 +4,7 @@ services:
   db:
     image: postgres:10.4
     volumes:
-      - /mnt/volume_blr1_01/postgres-data/:/var/lib/postgresql/data/
+      - /mnt/volume_blr1_01/postgres_data/:/var/lib/postgresql/data/
 
   web:
     build:
