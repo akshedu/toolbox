@@ -38,8 +38,6 @@ services:
       - rabbitmq
     depends_on:
       - rabbitmq
-    volumes:
-      - .:/src
 
   beat:
     build:
@@ -49,8 +47,6 @@ services:
       - rabbitmq
     links:
       - rabbitmq
-    volumes:
-      - .:/src
 
 volumes:
   postgres_data:
