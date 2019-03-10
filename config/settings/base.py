@@ -69,6 +69,7 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',
     'rest_framework',
     'django_celery_results',
+    'django_celery_beat',
     'corsheaders',
 ]
 LOCAL_APPS = [

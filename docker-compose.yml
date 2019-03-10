@@ -7,18 +7,21 @@ services:
       - postgres_data:/var/lib/postgresql/data/
 
   web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     depends_on:
       - db
       - rabbitmq
       - worker
+      - beat
     links:
       - db
       - rabbitmq
       - worker
+      - beat
 
   rabbitmq:
     image: rabbitmq:3.7.10-management
@@ -28,11 +31,23 @@ services:
       - 25672:25672
 
   worker:
-    build: .
-    command: celery -A config worker --loglevel=info -f celery.logs
+    build:
+      context: .
+      dockerfile: Dockerfile-celery-worker
     links:
       - rabbitmq
     depends_on:
+      - rabbitmq
+    volumes:
+      - .:/src
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile-celery-beat
+    depends_on:
+      - rabbitmq
+    links:
       - rabbitmq
     volumes:
       - .:/src

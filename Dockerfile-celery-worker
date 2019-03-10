@@ -9,4 +9,4 @@ RUN pip install -r requirements/local.txt
 
 ADD . /src/
 
-CMD /src/docker-entrypoint-web.sh
+CMD /src/docker-entrypoint-celery-worker.sh
