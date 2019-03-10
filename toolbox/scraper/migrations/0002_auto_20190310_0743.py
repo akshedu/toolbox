@@ -6,7 +6,7 @@ import csv
 def add_tracked_channels(apps, schema_editor):
     TrackedChannel = apps.get_model('scraper', 'TrackedChannel')
 
-    with open('channel_start.csv') as csv_file:
+    with open('channel_start.txt') as csv_file:
     	csv_reader = csv.DictReader(csv_file)
     	for row in csv_reader:
     		TrackedChannel.objects.create(channel_id=row['channel_id'])
