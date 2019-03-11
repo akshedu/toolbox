@@ -75,8 +75,8 @@ INSTALLED_APPS += ['django_extensions']  # noqa F405
 # Your stuff...
 # ------------------------------------------------------------------------------
 # Google Service Account files for making API calls
-SERVICE_ACCOUNT_FILES = ['/Users/akshansh/Downloads/ytproject-c002d6a344bc.json',
-                         '/Users/akshansh/Downloads/ytproject-c002d6a344bc.json']
+SERVICE_ACCOUNT_FILES = ['/src/ytproject-c002d6a344bc.json',
+                         '/src/ytproject-c002d6a344bc.json']
 
 # Get the final number of splits using a min of defined value with total service account files
 TRACKED_CHANNEL_SPLITS = min(TRACKED_CHANNEL_SPLITS, len(SERVICE_ACCOUNT_FILES))
