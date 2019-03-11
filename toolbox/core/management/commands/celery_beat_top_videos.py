@@ -20,7 +20,7 @@ class Command(BaseCommand):
             PeriodicTask.objects.create(
                 crontab=schedule,
                 name='Top Videos',
-                task='toolbox.core.create_top_videos',
+                task='toolbox.core.tasks.create_top_videos',
             )
         except IntegrityError as e:
             pass
@@ -29,7 +29,7 @@ class Command(BaseCommand):
             PeriodicTask.objects.create(
                 crontab=schedule,
                 name='Top Channels',
-                task='toolbox.core.create_top_channels',
+                task='toolbox.core.tasks.create_top_channels',
             )
         except IntegrityError as e:
             pass

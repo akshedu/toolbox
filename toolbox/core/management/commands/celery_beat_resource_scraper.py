@@ -26,7 +26,7 @@ class Command(BaseCommand):
             PeriodicTask.objects.create(
                 interval=schedule_channel,                  
                 name='Scrape Channels',          
-                task='toolbox.scraper.scrape_youtube_channels',  
+                task='toolbox.scraper.tasks.scrape_youtube_channels',  
             )
         except IntegrityError as e:
             pass
@@ -35,7 +35,7 @@ class Command(BaseCommand):
             PeriodicTask.objects.create(
                 interval=schedule_video,                  
                 name='Scrape Videos',          
-                task='toolbox.scraper.scrape_youtube_videos',  
+                task='toolbox.scraper.tasks.scrape_youtube_videos',  
             )
         except IntegrityError as e:
             pass
