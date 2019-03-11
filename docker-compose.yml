@@ -3,6 +3,12 @@ version: '3.7'
 services:
   db:
     image: postgres:10.4
+    environment:
+      POSTGRES_USER: usertool
+      POSTGRES_PASSWORD: postool
+      POSTGRES_DB: toolbox
+    ports:
+      - 5432:5432
     volumes:
       - /mnt/volume_blr1_01/postgres_data/:/var/lib/postgresql/data/
 
