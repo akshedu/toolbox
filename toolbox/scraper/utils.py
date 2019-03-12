@@ -2,6 +2,11 @@
 from google.oauth2 import service_account
 import googleapiclient.discovery
 from django.db import connection
+from googleapiclient.errors import HttpError
+from backoff import on_exception, expo as exponential
+
+YT_Exceptions = ['userRateLimitExceeded', 'quotaExceeded',
+                 'internalServerError', 'backendError']
 
 
 def get_videos_to_scrape(today):
@@ -18,7 +23,8 @@ def get_videos_to_scrape(today):
 def create_youtube_service(SCOPES, SERVICE_ACCOUNT_FILE):
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    return googleapiclient.discovery.build('youtube', 'v3', credentials=credentials, cache_discovery=False)
+    return googleapiclient.discovery.build('youtube', 'v3',
+                                           credentials=credentials, cache_discovery=False)
 
 
 def chunks(l, n):
@@ -28,8 +34,8 @@ def chunks(l, n):
 
 
 def chunkify(list, n):
-  """Yield total of n splits for the given list (not in order)"""
-  return [list[i::n] for i in range(n)]
+    """Yield total of n splits for the given list (not in order)"""
+    return [list[i::n] for i in range(n)]
 
 
 def get_channel_videos(youtube, channel_id):
@@ -50,26 +56,39 @@ def get_channel_videos(youtube, channel_id):
             playlistId=uploads_list_id,
             part="snippet",
             maxResults=50
-            )
+        )
         while playlistItem_query:
             playlistItem_query_response = playlistItem_query.execute()
             yield playlistItem_query_response
-            playlistItem_query = youtube.playlistItems().list_next(playlistItem_query,playlistItem_query_response)
+            playlistItem_query = youtube.playlistItems().list_next(
+                playlistItem_query, playlistItem_query_response)
     except:
         print('Data not found for channel id {}'.format(channel_id))
 
 
+class YTBackendException(Exception):
+    pass
+
+
+@on_exception(exponential, YTBackendException, max_tries=3)
 def get_channel_list(youtube, channel_ids, part):
     channel_ids = ','.join(str(v) for v in channel_ids)
-    return youtube.channels().list(
-        part=part,
-        id=channel_ids
-        ).execute()
+    try:
+        return youtube.channels().list(part=part, id=channel_ids).execute()
+    except HttpError as e:
+        if error.resp.reason in YT_Exceptions:
+            raise YTBackendException()
+        else:
+            return {}
 
 
+@on_exception(exponential, YTBackendException, max_tries=3)
 def get_video_list(youtube, video_ids, part):
     video_ids = ','.join(str(v) for v in video_ids)
-    return youtube.videos().list(
-        part=part,
-        id=video_ids
-        ).execute()
+    try:
+        return youtube.videos().list(part=part, id=video_ids).execute()
+    except HttpError as e:
+        if error.resp.reason in YT_Exceptions:
+            raise YTBackendException()
+        else:
+            return {}
