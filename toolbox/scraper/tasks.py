@@ -33,7 +33,7 @@ def scrape_youtube_channels():
 def scrape_youtube_videos():
     video_list = pd.DataFrame(list(ChannelVideoMap.objects.values('video_id')))
     scraped_videos = list(Video.objects.filter(last_scraped=datetime.date.today()).values_list('video_id', flat=True))
-    video_list = video_list[~video_list.video_id.isin(scraped_videos)].tolist()
+    video_list = video_list[~video_list.video_id.isin(scraped_videos)].video_id.tolist()
     video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
