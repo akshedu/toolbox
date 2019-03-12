@@ -141,6 +141,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'config.middleware.InternalAuthMiddleware'
 ]
 
 # STATIC
@@ -288,3 +290,7 @@ TIMERANGE_DICT = {'daily': 2, 'weekly': 8, 'monthly': 31}
 
 # Top Resource Limit
 TOP_RESOURCE_LIMIT = 50
+
+# Internal Auth
+INTERNAL_AUTH_HEADER = 'X-Toolbox-Internal-Auth'
+INTERNAL_AUTH_TOKEN = '6C37FD2DCCACFD8EB9F7CBD9639AC'
