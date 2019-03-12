@@ -97,8 +97,8 @@ class TopChannels(TopResource):
 
 class ResourceHistory(models.Model):
     field = models.CharField(max_length=25)
-    old_value = models.TextField()
-    new_value = models.TextField()
+    old_value = models.TextField(null=True)
+    new_value = models.TextField(null=True)
     crawled_date = models.DateField(default=datetime.date.today)
 
     class Meta:
