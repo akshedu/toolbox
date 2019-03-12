@@ -294,3 +294,11 @@ TOP_RESOURCE_LIMIT = 50
 # Internal Auth
 INTERNAL_AUTH_HEADER = 'X-Toolbox-Internal-Auth'
 INTERNAL_AUTH_TOKEN = '6C37FD2DCCACFD8EB9F7CBD9639AC'
+
+
+# Service account files for running scrapers
+SERVICE_ACCOUNT_FILES = ['/src/ytproject-c002d6a344bc.json',
+                         '/src/ytproject-c002d6a344bc.json']
+
+# Get the final number of splits using a min of defined value with total service account files
+TRACKED_CHANNEL_SPLITS = min(TRACKED_CHANNEL_SPLITS, len(SERVICE_ACCOUNT_FILES))
