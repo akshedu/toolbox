@@ -2,13 +2,12 @@
 from __future__ import absolute_import
 import isodate
 import datetime
-import pandas as pd
 
 from celery import shared_task
 from django.conf import settings
 from toolbox.scraper.utils import create_youtube_service, \
     chunkify, chunks, get_channel_list, \
-    get_video_list, get_channel_videos
+    get_video_list, get_channel_videos, get_videos_to_scrape
 from toolbox.core.utils import update_resource_details
 
 from toolbox.scraper.models import TrackedChannel
@@ -31,9 +30,7 @@ def scrape_youtube_channels():
 
 @shared_task
 def scrape_youtube_videos():
-    video_list = pd.DataFrame(list(ChannelVideoMap.objects.values('video_id')))
-    scraped_videos = list(Video.objects.filter(last_scraped=datetime.date.today()).values_list('video_id', flat=True))
-    video_list = video_list[~video_list.video_id.isin(scraped_videos)].video_id.tolist()
+    video_list = get_videos_to_scrape(str(datetime.datetime.now().date()))
     video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])

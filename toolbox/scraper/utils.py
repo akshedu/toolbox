@@ -1,6 +1,18 @@
 
 from google.oauth2 import service_account
 import googleapiclient.discovery
+from django.db import connection
+
+
+def get_videos_to_scrape(today):
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT video_id FROM 
+                        (SELECT a.video_id AS video_id, last_scraped 
+                        FROM core_channelvideomap a LEFT JOIN core_video b 
+                        ON a.video_id = b.video_id) sub 
+                        WHERE last_scraped != %s or last_scraped is NULL""", [today])
+        video_list = cursor.fetchall()
+    return [i[0] for i in video_list]
 
 
 def create_youtube_service(SCOPES, SERVICE_ACCOUNT_FILE):
