@@ -76,7 +76,7 @@ def get_channel_list(youtube, channel_ids, part):
     try:
         return youtube.channels().list(part=part, id=channel_ids).execute()
     except HttpError as e:
-        if error.resp.reason in YT_Exceptions:
+        if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
         else:
             return {}
@@ -88,7 +88,7 @@ def get_video_list(youtube, video_ids, part):
     try:
         return youtube.videos().list(part=part, id=video_ids).execute()
     except HttpError as e:
-        if error.resp.reason in YT_Exceptions:
+        if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
         else:
             return {}
