@@ -28,6 +28,7 @@ services:
       - rabbitmq
       - worker
       - beat
+      - redis_db
 
   rabbitmq:
     image: rabbitmq:3.7.10-management
@@ -54,5 +55,11 @@ services:
     links:
       - rabbitmq
 
+  redis_db:
+    image: redis:3.2-alpine
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:
