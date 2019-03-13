@@ -36,6 +36,7 @@ class Resource(models.Model):
 class Channel(Resource):
     channel = models.OneToOneField('scraper.TrackedChannel', on_delete=models.CASCADE, primary_key=True)
     country = models.CharField(max_length=3, null=True, blank=True)
+    last_discovery = models.DateField(default=datetime.date.today)
     
 
 class ChannelVideoMap(models.Model):

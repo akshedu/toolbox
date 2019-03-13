@@ -21,8 +21,6 @@ CHANNEL_DETAILS_PART = 'snippet,statistics'
 @shared_task
 def scrape_youtube_channels():
     channel_list = list(TrackedChannel.objects.values_list('channel_id', flat=True))
-    scraped_channels = list(Channel.objects.filter(last_scraped=datetime.date.today()).values_list('channel_id', flat=True))
-    channel_list = [x for x in channel_list if x not in scraped_channels]
     channel_chunks = list(chunkify(channel_list, settings.TRACKED_CHANNEL_SPLITS))
     for i in range(settings.TRACKED_CHANNEL_SPLITS):
         scrape_youtube_channel_chunks.delay(channel_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
@@ -31,9 +29,12 @@ def scrape_youtube_channels():
 @shared_task
 def scrape_youtube_videos():
     video_list = get_videos_to_scrape(str(datetime.datetime.now().date()))
-    video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
-    for i in range(settings.TRACKED_CHANNEL_SPLITS):
-        scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
+    if video_list:
+        video_chunks = list(chunkify(video_list, settings.TRACKED_CHANNEL_SPLITS))
+        for i in range(settings.TRACKED_CHANNEL_SPLITS):
+            scrape_youtube_video_chunks.delay(video_chunks[i], settings.SERVICE_ACCOUNT_FILES[i])
+    else:
+        print("No video details to scrape")
 
 
 @shared_task
@@ -56,11 +57,23 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
         print("Cannot create youtube services due to {}.".format(e))
         return False
 
-    for channel_chunks in chunks(channel_list, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
-        channel_details_task(youtube_service, channel_chunks, CHANNEL_DETAILS_PART)
+    details_scraped = list(Channel.objects.filter(
+        last_scraped=datetime.date.today()).values_list('channel_id', flat=True))
+    list_for_details = [x for x in channel_list if x not in details_scraped]
+    if list_for_details:
+        for channel_chunks in chunks(list_for_details, settings.YOUTUBE_RESOURCE_LIST_LIMIT):
+            channel_details_task(youtube_service, channel_chunks, CHANNEL_DETAILS_PART)
+    else:
+        print("No channel details to scrape")
 
-    for channel in channel_list:
-        channel_videos_map_task(youtube_service, channel)
+    discovered = list(Channel.objects.filter(
+        last_discovery=datetime.date.today()).values_list('channel_id', flat=True))
+    list_for_discovery = [x for x in channel_list if x not in discovered]
+    if list_for_discovery:
+        for channel in list_for_discovery:
+            channel_videos_map_task(youtube_service, channel)
+    else:
+        print("No channels videos to be discovered")
 
 
 #@shared_task
@@ -75,6 +88,7 @@ def channel_videos_map_task(youtube_service, channel_id):
                         video_id=item.get('snippet', {}).get('resourceId', {}).get('videoId', None)))
 
     ChannelVideoMap.objects.bulk_create(channel_video_map_to_create, batch_size=1000)
+    Channel.objects.filter(channel_id=channel_id).update(last_discovery=datetime.date.today())
 
 
 #@shared_task
