@@ -74,6 +74,7 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 STATICFILES_STORAGE = 'config.settings.production.StaticRootS3Boto3Storage'
 STATIC_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/static/'
+AWS_DEFAULT_ACL = None
 
 # MEDIA
 # ------------------------------------------------------------------------------
