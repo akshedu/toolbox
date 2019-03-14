@@ -46,8 +46,9 @@ class InternalAuthMiddleware:
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        token = get_header(request, settings.INTERNAL_AUTH_HEADER)
-        if token != settings.INTERNAL_AUTH_TOKEN:
-            return JsonResponse({'error': 'Not authorized. Please '\
-                'contact hello@toolbox.com to request API access.'},
-                status=403)
+        if '/lemon/admin/' not in request.path:
+            token = get_header(request, settings.INTERNAL_AUTH_HEADER)
+            if token != settings.INTERNAL_AUTH_TOKEN:
+                return JsonResponse({'error': 'Not authorized. Please '\
+                    'contact hello@toolbox.com to request API access.'},
+                    status=403)
