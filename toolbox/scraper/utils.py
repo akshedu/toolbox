@@ -62,8 +62,8 @@ def get_channel_videos(youtube, channel_id):
             yield playlistItem_query_response
             playlistItem_query = youtube.playlistItems().list_next(
                 playlistItem_query, playlistItem_query_response)
-    except:
-        print('Data not found for channel id {}'.format(channel_id))
+    except Exception as e:
+        print('Data not found for channel id {} due to {}'.format(channel_id, e))
 
 
 class YTBackendException(Exception):
