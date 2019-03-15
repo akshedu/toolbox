@@ -79,6 +79,7 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
 #@shared_task
 def channel_videos_map_task(youtube_service, channel_id):
     channel_video_map_to_create = []
+    break_flag = False
     for response in get_channel_videos(youtube_service, channel_id):
         for item in response.get("items",[]):
             if not ChannelVideoMap.objects.filter(video_id=item.get('snippet', {}).get('resourceId', {}).get('videoId', None)).exists():
@@ -86,7 +87,11 @@ def channel_videos_map_task(youtube_service, channel_id):
                     ChannelVideoMap(
                         channel_id=item.get('snippet', {}).get('channelId', None),
                         video_id=item.get('snippet', {}).get('resourceId', {}).get('videoId', None)))
-
+            else:
+                break_flag = True
+                break
+        if break_flag:
+            break
     ChannelVideoMap.objects.bulk_create(channel_video_map_to_create, batch_size=1000)
     Channel.objects.filter(channel_id=channel_id).update(last_discovery=datetime.date.today())
 
