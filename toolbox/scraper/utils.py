@@ -50,20 +50,18 @@ def get_channel_videos(youtube, channel_id):
         fields='items/contentDetails'
     ).execute()
     # Get the videos using the uploads playlist
-    try:
-        uploads_list_id = channel_query_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
-        playlistItem_query = youtube.playlistItems().list(
-            playlistId=uploads_list_id,
-            part="snippet",
-            maxResults=50
-        )
-        while playlistItem_query:
-            playlistItem_query_response = playlistItem_query.execute()
-            yield playlistItem_query_response
-            playlistItem_query = youtube.playlistItems().list_next(
-                playlistItem_query, playlistItem_query_response)
-    except Exception as e:
-        print('Data not found for channel id {} due to {}'.format(channel_id, e))
+    if channel_query_response['items']:
+        try:
+            uploads_list_id = channel_query_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+            playlistItem_query = get_playlist_items_query(youtube, uploads_list_id)
+            while playlistItem_query:
+                playlistItem_query_response = get_playlist_items(playlistItem_query)
+                yield playlistItem_query_response
+                playlistItem_query = get_playlist_items_next(youtube, playlistItem_query, playlistItem_query_response)
+        except Exception as e:
+            print('Data not found for channel id {} due to {}'.format(channel_id, e))
+    else:
+        print("Empty channel query response for channel_id {}".format(channel_id))
 
 
 class YTBackendException(Exception):
@@ -79,7 +77,11 @@ def get_channel_list(youtube, channel_ids, part):
         if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
         else:
+            print('Unknown HttpError {}'.format(e))
             return {}
+    except Exception as e:
+       print('Unknown exception {}'.format(e))
+       return {}
 
 
 @on_exception(exponential, YTBackendException, max_tries=3)
@@ -91,4 +93,35 @@ def get_video_list(youtube, video_ids, part):
         if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
         else:
+            print('Unknown HttpError {}'.format(e))
             return {}
+    except Exception as e:
+        print('Unknown exception {}'.format(e))
+        return {}
+
+
+def get_playlist_items_query(youtube, uploads_list_id):
+    return youtube.playlistItems().list(
+        playlistId=uploads_list_id,
+        part="snippet",
+        maxResults=50
+    )
+
+
+@on_exception(exponential, YTBackendException, max_tries=3)
+def get_playlist_items(playlist_items_query):
+    try:
+        return playlist_items_query.execute()
+    except HttpError as e:
+        if e.resp.reason in YT_Exceptions:
+            raise YTBackendException()
+
+
+@on_exception(exponential, YTBackendException, max_tries=3)
+def get_playlist_items_next(youtube, playlistItem_query, playlistItem_query_response):
+    try:
+        return youtube.playlistItems().list_next(
+            playlistItem_query, playlistItem_query_response)
+    except HttpError as e:
+        if e.resp.reason in YT_Exceptions:
+            raise YTBackendException()
