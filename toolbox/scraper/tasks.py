@@ -66,14 +66,8 @@ def scrape_youtube_channel_chunks(channel_list, service_account_file):
     else:
         print("No channel details to scrape")
 
-    discovered = list(Channel.objects.filter(
-        last_discovery=datetime.date.today()).values_list('channel_id', flat=True))
-    list_for_discovery = [x for x in channel_list if x not in discovered]
-    if list_for_discovery:
-        for channel in list_for_discovery:
-            channel_videos_map_task(youtube_service, channel)
-    else:
-        print("No channels videos to be discovered")
+    for channel in channel_list:
+        channel_videos_map_task(youtube_service, channel)
 
 
 #@shared_task
