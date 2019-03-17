@@ -47,6 +47,8 @@ def get_channel_videos(youtube, channel_id):
             playlistItem_query = get_playlist_items_query(youtube, uploads_list_id)
             while playlistItem_query:
                 playlistItem_query_response = get_playlist_items(playlistItem_query)
+                if not playlistItem_query_response:
+                    print("ERROR channel id {} uploads id {}".format(channel_id, uploads_list_id))
                 yield playlistItem_query_response
                 playlistItem_query = get_playlist_items_next(youtube, playlistItem_query, playlistItem_query_response)
         except Exception as e:
