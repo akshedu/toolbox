@@ -39,18 +39,9 @@ def chunkify(list, n):
 
 
 def get_channel_videos(youtube, channel_id):
-    temp_video_id = []
-    temp_channel_id = []
-    # Call the Analytics API to retrieve a report. For a list of available
-    # reports, see:
-    # https://developers.google.com/youtube/analytics/v1/channel_reports
-    channel_query_response = youtube.channels().list(
-        part='contentDetails',
-        id=channel_id,
-        fields='items/contentDetails'
-    ).execute()
+    channel_query_response = get_channel_query(youtube, channel_id)
     # Get the videos using the uploads playlist
-    if channel_query_response['items']:
+    if channel_query_response and channel_query_response['items']:
         try:
             uploads_list_id = channel_query_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
             playlistItem_query = get_playlist_items_query(youtube, uploads_list_id)
@@ -125,3 +116,22 @@ def get_playlist_items_next(youtube, playlistItem_query, playlistItem_query_resp
     except HttpError as e:
         if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
+
+
+@on_exception(exponential, YTBackendException, max_tries=3)
+def get_channel_query(youtube, channel_id):
+    try:
+        return youtube.channels().list(
+            part='contentDetails',
+            id=channel_id,
+            fields='items/contentDetails'
+        ).execute()
+    except HttpError as e:
+        if e.resp.reason in YT_Exceptions:
+            raise YTBackendException()
+        else:
+            print('Unknown HttpError {}'.format(e))
+            return {}
+    except Exception as e:
+       print('Unknown exception {}'.format(e))
+       return {}
