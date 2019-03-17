@@ -106,6 +106,8 @@ def get_playlist_items(playlist_items_query):
     except HttpError as e:
         if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
+        else:
+            raise Exception('Unknown HttpError {}'.format(e))
 
 
 @on_exception(exponential, YTBackendException, max_tries=3)
@@ -116,6 +118,8 @@ def get_playlist_items_next(youtube, playlistItem_query, playlistItem_query_resp
     except HttpError as e:
         if e.resp.reason in YT_Exceptions:
             raise YTBackendException()
+        else:
+            raise Exception('Unknown HttpError {}'.format(e))
 
 
 @on_exception(exponential, YTBackendException, max_tries=3)
