@@ -1,5 +1,6 @@
 from .base import *  # noqa
 from .base import env
+from corsheaders.defaults import default_headers
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -36,6 +37,10 @@ CORS_ORIGIN_REGEX_WHITELIST = (
     r'http(s?)://[\w\-]+.toolbox.com',
     r'http(s?)://localhost:[0-9]+',
     r'http(s?)://127.0.0.1:[0-9]+'
+)
+
+CORS_ALLOW_HEADERS = default_headers + (
+    'x-toolbox-internal-auth',
 )
 
 # SECURITY
