@@ -125,7 +125,7 @@ def get_top_videos_df(request, timerange):
     top_videos_incremental = top_videos_queryset.values(
         'video_id', 'video__title', 'incremental', 'metric', 'video__video__channel__title')
     top_video_stats = VideoStats.objects.filter(video_id__in=top_video_ids, crawled_date=end_date).values(
-        'video_id', 'views', 'likes', 'dislikes', 'comments')
+        'video_id', 'views', 'likes', 'dislikes', 'comments', 'video__thumbnail_default_url')
     top_videos_incremental_df = pd.DataFrame(list(top_videos_incremental))
     top_videos_stats_df = pd.DataFrame(list(top_video_stats))
     top_videos = pd.merge(top_videos_incremental_df,
@@ -163,7 +163,7 @@ class TopChannelViewSet(ViewPaginatorMixin, ViewSet):
         top_channels_incremental = top_channels_queryset.values(
             'channel_id', 'channel__title', 'incremental', 'metric')
         top_channels_stats = ChannelStats.objects.filter(
-            channel_id__in=top_channel_ids, crawled_date=end_date).values('channel_id', 'views', 'subscribers')
+            channel_id__in=top_channel_ids, crawled_date=end_date).values('channel_id', 'views', 'subscribers', 'channel__thumbnail_default_url')
         top_channels_incremental_df = pd.DataFrame(
             list(top_channels_incremental))
         top_channels_stats_df = pd.DataFrame(list(top_channels_stats))
