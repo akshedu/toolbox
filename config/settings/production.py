@@ -7,7 +7,7 @@ from corsheaders.defaults import default_headers
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['139.59.81.12'])
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['139.59.81.12', '139.59.81.12:3000'])
 
 # DATABASES
 # ------------------------------------------------------------------------------
