@@ -152,7 +152,7 @@ def video_details_task(youtube_service, video_list, part):
                     thumbnail_default_url=item.get('snippet', {}).get('thumbnails', {}).get('default', {}).get('url', None),
                     thumbnail_medium_url=item.get('snippet', {}).get('thumbnails', {}).get('medium', {}).get('url', None),
                     thumbnail_high_url=item.get('snippet', {}).get('thumbnails', {}).get('high', {}).get('url', None),
-                    duration=isodate.parse_duration(item.get('contentDetails', {}).get('duration', None)).total_seconds(),
+                    duration=isodate.parse_duration(item.get('contentDetails', {}).get('duration', None)).total_seconds() if item.get('contentDetails', {}).get('duration', None) else None,
                     keywords=item.get('snippet', {}).get('tags', None))
 
         video_stats_to_create.append(
